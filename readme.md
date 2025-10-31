@@ -1,0 +1,1 @@
+# MedSegMNIST - A Python Library for Easy Access to 2D/3D Medical Image Segmentation Datasets for Benchmarking and Learning Purposes
