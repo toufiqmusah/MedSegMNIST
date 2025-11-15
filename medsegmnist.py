@@ -40,7 +40,7 @@ class MedSegMNIST3D(Dataset):
                 raise ValueError(f"Size {size} not available. Choose from: {self.available_sizes}")
             
             self.size = size
-            self.size_flag = f"_{size}"
+            self.size_flag = f"{size}"
         
         if root is not None:
             self.root = root
@@ -53,9 +53,7 @@ class MedSegMNIST3D(Dataset):
         
         npz_path = os.path.join(self.root, f"{self.flag}-{self.size_flag}.npz")
         if not os.path.exists(npz_path):
-            raise RuntimeError(
-                f"Dataset not found at {npz_path}. Set download=True to download it."
-            )
+            raise RuntimeError(f"Dataset not found at {npz_path}. Set download=True to download it.")
         
         # Load data
         npz_file = np.load(npz_path, mmap_mode=mmap_mode)
