@@ -40,7 +40,7 @@ class MedSegMNIST3D(Dataset):
                 raise ValueError(f"Size {size} not available. Choose from: {self.available_sizes}")
             
             self.size = size
-            self.size_flag = f"{size}"
+            self.size_flag = f"_{size}"
         
         if root is not None:
             self.root = root
