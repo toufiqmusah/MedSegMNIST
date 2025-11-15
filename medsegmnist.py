@@ -51,7 +51,7 @@ class MedSegMNIST3D(Dataset):
         if download:
             self.download()
         
-        npz_path = os.path.join(self.root, f"{self.flag}-{self.size_flag}.npz")
+        npz_path = os.path.join(self.root, f"{self.flag}{self.size_flag}.npz")
         if not os.path.exists(npz_path):
             raise RuntimeError(f"Dataset not found at {npz_path}. Set download=True to download it.")
         
