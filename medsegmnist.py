@@ -48,10 +48,11 @@ class MedSegMNIST3D(Dataset):
         else:
             raise RuntimeError("Failed to setup root directory. Please specify a valid root path.")
         
-        if download:
+        npz_path = os.path.join(self.root, f"{self.flag}{self.size_flag}.npz")
+        
+        if download and not os.path.exists(npz_path):
             self.download()
         
-        npz_path = os.path.join(self.root, f"{self.flag}{self.size_flag}.npz")
         if not os.path.exists(npz_path):
             raise RuntimeError(f"Dataset not found at {npz_path}. Set download=True to download it.")
         
