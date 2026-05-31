@@ -1,11 +1,16 @@
-import argparse, os, json
+import argparse
+import os
 import numpy as np
 from PIL import Image
 from skimage.transform import resize
 from common import (
     normalize_xray,
-    make_splits, compute_padded_shape, pad_to_shape,
-    save_npz, save_metadata, write_checksum,
+    make_splits,
+    compute_padded_shape,
+    pad_to_shape,
+    save_npz,
+    save_metadata,
+    write_checksum,
 )
 
 FLAG = "lung2d"
@@ -13,8 +18,6 @@ CLASS_NAME = "LungSegMNIST"
 MODALITY = "X-ray"
 ANATOMY = "Lung"
 DIMENSIONALITY = "2D"
-N_CLASSES = 2
-N_CHANNELS = 1
 
 SUBSET_SOURCES = {
     "Darwin": {
@@ -51,7 +54,7 @@ def load_subset(subset_dir, subset_name):
     mask_dir = os.path.join(subset_dir, "mask")
     if not os.path.isdir(img_dir) or not os.path.isdir(mask_dir):
         print(f"  Skipping {subset_name}: no img/ or mask/ directory")
-        return [], []
+        return [], [], []
 
     img_files = sorted(os.listdir(img_dir))
     mask_files = sorted(os.listdir(mask_dir))
@@ -61,8 +64,10 @@ def load_subset(subset_dir, subset_name):
     common_stems = sorted(img_stems & mask_stems)
 
     if len(common_stems) < min(len(img_files), len(mask_files)):
-        print(f"  Warning {subset_name}: {len(img_files)} images, {len(mask_files)} masks, "
-              f"{len(common_stems)} matched")
+        print(
+            f"  Warning {subset_name}: {len(img_files)} images, {len(mask_files)} masks, "
+            f"{len(common_stems)} matched"
+        )
 
     images, masks, meta = [], [], []
     for stem in common_stems:
@@ -79,11 +84,13 @@ def load_subset(subset_dir, subset_name):
 
         images.append(img_np)
         masks.append(mask_binary)
-        meta.append({
-            "original_id": stem,
-            "source_subset": subset_name,
-            "original_shape": list(mask_binary.shape),
-        })
+        meta.append(
+            {
+                "original_id": stem,
+                "source_subset": subset_name,
+                "original_shape": list(mask_binary.shape),
+            }
+        )
 
     return images, masks, meta
 
@@ -114,7 +121,9 @@ def main(raw_dir, out_dir, sizes):
 
     print("Creating splits...")
     n_total = len(all_images)
-    train_idx, test_idx, cv_folds = make_splits(n_total, test_size=0.20, n_folds=5, seed=42)
+    train_idx, test_idx, cv_folds = make_splits(
+        n_total, test_size=0.20, n_folds=5, seed=42
+    )
     print(f"  Train: {len(train_idx)}, Test: {len(test_idx)}")
 
     for p_idx in train_idx:
@@ -122,11 +131,15 @@ def main(raw_dir, out_dir, sizes):
     for p_idx in test_idx:
         all_meta[p_idx]["split"] = "test"
 
+    generated_sizes = []
+    native_padded_shape = None
+
     for size_val in sizes:
         print(f"Processing size={size_val}...")
 
         if size_val == "native":
             padded_shape = compute_padded_shape(all_shapes, percentile=95)
+            native_padded_shape = padded_shape
             print(f"  Native padded shape: {padded_shape}")
 
             train_images_list = [
@@ -134,24 +147,26 @@ def main(raw_dir, out_dir, sizes):
                 for i in train_idx
             ]
             train_masks_list = [
-                pad_to_shape(all_masks[i], padded_shape)
-                for i in train_idx
+                pad_to_shape(all_masks[i], padded_shape) for i in train_idx
             ]
             test_images_list = [
                 normalize_xray(pad_to_shape(all_images[i], padded_shape))
                 for i in test_idx
             ]
             test_masks_list = [
-                pad_to_shape(all_masks[i], padded_shape)
-                for i in test_idx
+                pad_to_shape(all_masks[i], padded_shape) for i in test_idx
             ]
         else:
             target_size = STANDARDISED_SIZES[size_val]
             target_shape = (target_size, target_size)
 
             def process_sample(img, msk):
-                img_rs = resize(img, target_shape, preserve_range=True, order=1).astype(np.float32)
-                msk_rs = resize(msk, target_shape, preserve_range=True, order=0).astype(np.uint8)
+                img_rs = resize(img, target_shape, preserve_range=True, order=1).astype(
+                    np.float32
+                )
+                msk_rs = resize(msk, target_shape, preserve_range=True, order=0).astype(
+                    np.uint8
+                )
                 msk_rs = (msk_rs > 0.5).astype(np.uint8)
                 return normalize_xray(img_rs), msk_rs
 
@@ -172,61 +187,66 @@ def main(raw_dir, out_dir, sizes):
         test_images = np.stack(test_images_list)
         test_masks = np.stack(test_masks_list)
 
-        size_suffix = "" if size_val == "native" else f"_{size_val}"
-        npz_path = os.path.join(out_dir, f"{FLAG}{size_suffix}.npz")
+        size_key = str(size_val)
+        suffix = "_native" if size_val == "native" else f"_{size_val}"
+
+        npz_path = os.path.join(out_dir, f"{FLAG}{suffix}.npz")
         save_npz(npz_path, train_images, train_masks, test_images, test_masks)
-        print(f"  Saved: {npz_path} ({train_images.nbytes / 1e6:.0f} MB, "
-              f"train={len(train_images)}, test={len(test_images)})")
+        print(
+            f"  Saved: {npz_path} ({train_images.nbytes / 1e6:.0f} MB, "
+            f"train={len(train_images)}, test={len(test_images)})"
+        )
 
-        if size_val == "native":
-            meta_available_sizes = sorted([s for s in sizes if isinstance(s, int)]) + ["native"]
-        else:
-            meta_available_sizes = [s for s in sizes if isinstance(s, int)]
+        checksum_name = f"{FLAG}_{size_key}.sha256"
+        write_checksum(npz_path, os.path.join(out_dir, "checksums"), checksum_name)
+        print(f"  Checksum: checksums/{checksum_name}")
 
-        source_names = []
-        source_urls = []
-        for subset_name in sorted(os.listdir(raw_dir)):
-            if subset_name in SUBSET_SOURCES:
-                source_names.append(SUBSET_SOURCES[subset_name]["name"])
-                source_urls.append(SUBSET_SOURCES[subset_name]["url"])
+        generated_sizes.append(size_val)
 
-        meta = {
-            "flag": FLAG,
-            "class_name": CLASS_NAME,
-            "name": " + ".join(source_names),
-            "version": "1.0.0",
-            "dimensionality": DIMENSIONALITY,
-            "modality": MODALITY,
-            "anatomy": ANATOMY,
-            "source_urls": source_urls,
-            "license": "Mixed (see per_sample_metadata for per-subset licenses)",
-            "redistribution_allowed": True,
-            "paper_doi": "",
-            "split_seed": 42,
-            "split_ratios": {"train": 0.80, "test": 0.20},
-            "split_strategy": "image-level",
-            "available_sizes": meta_available_sizes,
-            "native_padded_shape": list(padded_shape) if size_val == "native" else None,
-            "native_percentile_box": 95,
-            "standardised_sizes": {
-                str(k): {"shape": [v, v]} for k, v in STANDARDISED_SIZES.items()
-                if k in [s for s in sizes if isinstance(s, int)]
-            },
-            "normalization": "percentile_clip_zscore",
-            "normalization_percentiles": [1.0, 99.0],
-            "label_names": LABEL_NAMES,
-            "n_train": len(train_idx),
-            "n_test": len(test_idx),
-            "cv_folds": cv_folds,
-            "per_sample_metadata": all_meta,
-        }
+    source_names = []
+    source_urls = []
+    for subset_name in sorted(SUBSET_SOURCES.keys()):
+        source_names.append(SUBSET_SOURCES[subset_name]["name"])
+        source_urls.append(SUBSET_SOURCES[subset_name]["url"])
 
-        meta_path = os.path.join(out_dir, f"{FLAG}{size_suffix}.json")
-        save_metadata(meta_path, meta)
-        print(f"  Saved: {meta_path}")
+    meta = {
+        "flag": FLAG,
+        "class_name": CLASS_NAME,
+        "name": " + ".join(source_names),
+        "version": "1.0.0",
+        "dimensionality": DIMENSIONALITY,
+        "modality": MODALITY,
+        "anatomy": ANATOMY,
+        "source_urls": source_urls,
+        "license": "Mixed (see per_sample_metadata for per-subset licenses)",
+        "redistribution_allowed": True,
+        "paper_doi": "",
+        "split_seed": 42,
+        "split_ratios": {"train": 0.80, "test": 0.20},
+        "split_strategy": "image-level",
+        "available_sizes": sorted([s for s in generated_sizes if isinstance(s, int)])
+        + (["native"] if "native" in generated_sizes else []),
+        "native_padded_shape": list(native_padded_shape)
+        if native_padded_shape
+        else None,
+        "native_percentile_box": 95,
+        "standardised_sizes": {
+            str(k): {"shape": [v, v]}
+            for k, v in STANDARDISED_SIZES.items()
+            if k in [s for s in generated_sizes if isinstance(s, int)]
+        },
+        "normalization": "percentile_clip_zscore",
+        "normalization_percentiles": [1.0, 99.0],
+        "label_names": LABEL_NAMES,
+        "n_train": len(train_idx),
+        "n_test": len(test_idx),
+        "cv_folds": cv_folds,
+        "per_sample_metadata": all_meta,
+    }
 
-        write_checksum(npz_path, os.path.join(out_dir, "checksums"))
-        print(f"  Checksum written")
+    meta_path = os.path.join(out_dir, f"{FLAG}.json")
+    save_metadata(meta_path, meta)
+    print(f"  Metadata: {meta_path}")
 
 
 def parse_size(s):
@@ -237,13 +257,21 @@ def parse_size(s):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description=f"Preprocess chest X-ray lung datasets ({', '.join(SUBSET_SOURCES)}) → {CLASS_NAME}"
+        description=f"Preprocess chest X-ray lung datasets ({', '.join(SUBSET_SOURCES)}) -> {CLASS_NAME}"
     )
-    parser.add_argument("--raw_dir", required=True,
-                        help="Path to chest-xray-lungs parent directory containing subdirectories "
-                             "(Montgomery/, Shenzhen/, Darwin/)")
+    parser.add_argument(
+        "--raw_dir",
+        required=True,
+        help="Path to chest-xray-lungs parent directory containing subdirectories "
+        "(Montgomery/, Shenzhen/, Darwin/)",
+    )
     parser.add_argument("--out_dir", required=True)
-    parser.add_argument("--sizes", nargs="+", default=["128"], type=parse_size,
-                        help="Sizes to generate: 128, 256, 512, native")
+    parser.add_argument(
+        "--sizes",
+        nargs="+",
+        default=["128"],
+        type=parse_size,
+        help="Sizes to generate: 128, 256, 512, native",
+    )
     args = parser.parse_args()
     main(args.raw_dir, args.out_dir, args.sizes)

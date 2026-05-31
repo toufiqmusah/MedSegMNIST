@@ -1,10 +1,16 @@
-import argparse, os, glob, json
+import argparse
+import os
 import numpy as np
 import nibabel as nib
 from common import (
-    resample_and_resize, resample_only, normalize_mri,
-    make_splits, compute_padded_shape, pad_to_shape,
-    save_npz, save_metadata, write_checksum,
+    resample_and_resize,
+    normalize_mri,
+    make_splits,
+    compute_padded_shape,
+    pad_to_shape,
+    save_npz,
+    save_metadata,
+    write_checksum,
 )
 
 FLAG = "brain3d"
@@ -13,10 +19,9 @@ SOURCE_NAME = "BraTS-Africa"
 MODALITY = "MRI"
 ANATOMY = "Brain"
 DIMENSIONALITY = "3D"
-N_CLASSES = 4
 
 STANDARDISED_SIZES = {
-    64: {"shape": (64, 64, 48), "spacing": (3.75, 3.75, 3.23)}, # can we do (96, 96, 64) or something of that nature for brain?  64 seems small.
+    96: {"shape": (96, 96, 64), "spacing": (2.5, 2.5, 2.42)},
     128: {"shape": (128, 128, 80), "spacing": (1.88, 1.88, 1.94)},
     224: {"shape": (224, 224, 144), "spacing": (1.07, 1.07, 1.08)},
 }
@@ -59,11 +64,13 @@ def load_volumes(patients):
         seg = nib.load(p["seg"]).get_fdata().astype(np.uint8)
         images.append(img)
         masks.append(seg)
-        per_sample_meta.append({
-            "original_id": p["id"],
-            "original_spacing_mm": list(NATIVE_SPACING),
-            "original_shape": list(img.shape),
-        })
+        per_sample_meta.append(
+            {
+                "original_id": p["id"],
+                "original_spacing_mm": list(NATIVE_SPACING),
+                "original_shape": list(img.shape),
+            }
+        )
     return np.stack(images), np.stack(masks), per_sample_meta
 
 
@@ -80,7 +87,9 @@ def main(raw_dir, out_dir, sizes):
 
     print("Creating splits...")
     n_total = len(patients)
-    train_idx, test_idx, cv_folds = make_splits(n_total, test_size=0.20, n_folds=5, seed=42)
+    train_idx, test_idx, cv_folds = make_splits(
+        n_total, test_size=0.20, n_folds=5, seed=42
+    )
     print(f"  Train: {len(train_idx)}, Test: {len(test_idx)}")
 
     for p_idx in train_idx:
@@ -93,19 +102,19 @@ def main(raw_dir, out_dir, sizes):
     test_images_raw = all_images[test_idx]
     test_masks_raw = all_masks[test_idx]
 
+    generated_sizes = []
+    native_padded_shape = None
+
     for size_val in sizes:
-        size_key = str(size_val)
         print(f"Processing size={size_val}...")
 
         if size_val == "native":
             spacing = NATIVE_SPACING
             target_shape = None
-            out_shape = NATIVE_SHAPE
         else:
             spec = STANDARDISED_SIZES[size_val]
             spacing = spec["spacing"]
             target_shape = spec["shape"]
-            out_shape = target_shape
 
         train_images_list, train_masks_list = [], []
         test_images_list, test_masks_list = [], []
@@ -133,71 +142,76 @@ def main(raw_dir, out_dir, sizes):
         if size_val == "native":
             all_train_shapes = [v.shape for v in train_images_list]
             all_test_shapes = [v.shape for v in test_images_list]
-            padded_shape = compute_padded_shape(all_train_shapes + all_test_shapes, percentile=95)
+            padded_shape = compute_padded_shape(
+                all_train_shapes + all_test_shapes, percentile=95
+            )
+            native_padded_shape = padded_shape
             print(f"  Native padded shape: {padded_shape}")
-            train_images_list = [pad_to_shape(v, padded_shape) for v in train_images_list]
+            train_images_list = [
+                pad_to_shape(v, padded_shape) for v in train_images_list
+            ]
             train_masks_list = [pad_to_shape(v, padded_shape) for v in train_masks_list]
             test_images_list = [pad_to_shape(v, padded_shape) for v in test_images_list]
             test_masks_list = [pad_to_shape(v, padded_shape) for v in test_masks_list]
-            out_shape = padded_shape
 
         train_images = np.stack(train_images_list)
         train_masks = np.stack(train_masks_list)
         test_images = np.stack(test_images_list)
         test_masks = np.stack(test_masks_list)
 
-        size_suffix = "" if size_val == "native" else f"_{size_val}"
-        npz_path = os.path.join(out_dir, f"{FLAG}{size_suffix}.npz")
+        size_key = str(size_val)
+        suffix = "_native" if size_val == "native" else f"_{size_val}"
+
+        npz_path = os.path.join(out_dir, f"{FLAG}{suffix}.npz")
         save_npz(npz_path, train_images, train_masks, test_images, test_masks)
         print(f"  Saved: {npz_path} ({train_images.nbytes / 1e6:.0f} MB)")
 
-        if size_val == "native":
-            spacing_for_json = spacing
-            size_for_json = "native"
-        else:
-            spacing_for_json = list(STANDARDISED_SIZES[size_val]["spacing"])
-            size_for_json = size_val
+        checksum_name = f"{FLAG}_{size_key}.sha256"
+        write_checksum(npz_path, os.path.join(out_dir, "checksums"), checksum_name)
+        print(f"  Checksum: checksums/{checksum_name}")
 
-        meta = {
-            "flag": FLAG,
-            "class_name": CLASS_NAME,
-            "name": SOURCE_NAME,
-            "version": "1.0.0",
-            "dimensionality": DIMENSIONALITY,
-            "modality": MODALITY,
-            "anatomy": ANATOMY,
-            "source_url": "https://www.cancerimagingarchive.net/collection/brats-africa/",
-            "license": "TCIA Restricted",
-            "redistribution_allowed": True,
-            "paper_doi": "",
-            "split_seed": 42,
-            "split_ratios": {"train": 0.80, "test": 0.20},
-            "split_strategy": "patient-level",
-            "available_sizes": sorted([s for s in sizes if isinstance(s, int)]) + (["native"] if "native" in sizes else []),
-            "native_voxel_spacing_mm": list(NATIVE_SPACING),
-            "native_padded_shape": list(NATIVE_SHAPE),
-            "native_percentile_box": 95,
-            "standardised_sizes": {
-                str(k): {"shape": list(v["shape"]), "voxel_spacing_mm": list(v["spacing"])}
-                for k, v in STANDARDISED_SIZES.items()
-                if k in [s for s in sizes if isinstance(s, int)]
-            },
-            "normalization": "percentile_clip_zscore",
-            "normalization_percentiles": [0.5, 99.5],
-            "label_names": LABEL_NAMES,
-            "label_original_values": LABEL_ORIGINAL_VALUES,
-            "n_train": len(train_idx),
-            "n_test": len(test_idx),
-            "cv_folds": cv_folds,
-            "per_sample_metadata": per_sample_meta,
-        }
+        generated_sizes.append(size_val)
 
-        meta_path = os.path.join(out_dir, f"{FLAG}{size_suffix}.json")
-        save_metadata(meta_path, meta)
-        print(f"  Saved: {meta_path}")
+    meta = {
+        "flag": FLAG,
+        "class_name": CLASS_NAME,
+        "name": SOURCE_NAME,
+        "version": "1.0.0",
+        "dimensionality": DIMENSIONALITY,
+        "modality": MODALITY,
+        "anatomy": ANATOMY,
+        "source_url": "https://www.cancerimagingarchive.net/collection/brats-africa/",
+        "license": "TCIA Restricted",
+        "redistribution_allowed": True,
+        "paper_doi": "",
+        "split_seed": 42,
+        "split_ratios": {"train": 0.80, "test": 0.20},
+        "split_strategy": "patient-level",
+        "available_sizes": sorted([s for s in generated_sizes if isinstance(s, int)])
+        + (["native"] if "native" in generated_sizes else []),
+        "native_voxel_spacing_mm": list(NATIVE_SPACING),
+        "native_padded_shape": list(native_padded_shape)
+        if native_padded_shape
+        else list(NATIVE_SHAPE),
+        "native_percentile_box": 95,
+        "standardised_sizes": {
+            str(k): {"shape": list(v["shape"]), "voxel_spacing_mm": list(v["spacing"])}
+            for k, v in STANDARDISED_SIZES.items()
+            if k in [s for s in generated_sizes if isinstance(s, int)]
+        },
+        "normalization": "percentile_clip_zscore",
+        "normalization_percentiles": [0.5, 99.5],
+        "label_names": LABEL_NAMES,
+        "label_original_values": LABEL_ORIGINAL_VALUES,
+        "n_train": len(train_idx),
+        "n_test": len(test_idx),
+        "cv_folds": cv_folds,
+        "per_sample_metadata": per_sample_meta,
+    }
 
-        write_checksum(npz_path, os.path.join(out_dir, "checksums"))
-        print(f"  Checksum written")
+    meta_path = os.path.join(out_dir, f"{FLAG}.json")
+    save_metadata(meta_path, meta)
+    print(f"  Metadata: {meta_path}")
 
 
 def parse_size(s):
@@ -207,10 +221,21 @@ def parse_size(s):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=f"Preprocess {SOURCE_NAME} → {CLASS_NAME}")
-    parser.add_argument("--raw_dir", required=True, help="Path to raw BraTS-Africa dataset directory")
-    parser.add_argument("--out_dir", required=True, help="Output directory for processed npz files")
-    parser.add_argument("--sizes", nargs="+", default=["128"], type=parse_size,
-                        help="Sizes to generate: 64, 128, 224, native")
+    parser = argparse.ArgumentParser(
+        description=f"Preprocess {SOURCE_NAME} -> {CLASS_NAME}"
+    )
+    parser.add_argument(
+        "--raw_dir", required=True, help="Path to raw BraTS-Africa dataset directory"
+    )
+    parser.add_argument(
+        "--out_dir", required=True, help="Output directory for processed npz files"
+    )
+    parser.add_argument(
+        "--sizes",
+        nargs="+",
+        default=["128"],
+        type=parse_size,
+        help="Sizes to generate: 96, 128, 224, native",
+    )
     args = parser.parse_args()
     main(args.raw_dir, args.out_dir, args.sizes)

@@ -1,4 +1,6 @@
-import os, json, hashlib
+import os
+import json
+import hashlib
 import numpy as np
 import torchio as tio
 from sklearn.model_selection import train_test_split, KFold
@@ -73,15 +75,17 @@ def make_splits(n_samples, test_size=0.20, n_folds=5, seed=42):
     cv_folds = {}
     for i, (tr, va) in enumerate(kf.split(train_idx)):
         cv_folds[f"fold_{i}"] = {
-            "train": train_idx[tr].tolist(),
-            "val": train_idx[va].tolist(),
+            "train": tr.tolist(),
+            "val": va.tolist(),
         }
     return train_idx.tolist(), test_idx.tolist(), cv_folds
 
 
 def compute_padded_shape(all_shapes, percentile=95):
     shapes = np.array(all_shapes)
-    return tuple(int(np.percentile(shapes[:, i], percentile)) for i in range(shapes.shape[1]))
+    return tuple(
+        int(np.percentile(shapes[:, i], percentile)) for i in range(shapes.shape[1])
+    )
 
 
 def pad_to_shape(volume, target_shape, constant=0):
@@ -112,11 +116,13 @@ def compute_sha256(file_path):
     return sha.hexdigest()
 
 
-def write_checksum(npz_path, checksum_dir):
+def write_checksum(npz_path, checksum_dir, checksum_name=None):
     os.makedirs(checksum_dir, exist_ok=True)
     sha = compute_sha256(npz_path)
     base = os.path.basename(npz_path)
-    out_path = os.path.join(checksum_dir, f"{base}.sha256")
+    if checksum_name is None:
+        checksum_name = f"{base}.sha256"
+    out_path = os.path.join(checksum_dir, checksum_name)
     with open(out_path, "w") as f:
         f.write(f"{sha}  {base}\n")
     return sha

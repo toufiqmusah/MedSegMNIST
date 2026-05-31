@@ -1,1 +1,11 @@
 __pycache__/
+*.pyc
+.DS_Store
+.pytest_cache/
+*.egg-info/
+checkpoints/
+.vscode/
+.idea/
+docs/build/
+lightning_logs/
+
