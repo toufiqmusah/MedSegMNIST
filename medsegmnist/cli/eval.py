@@ -87,3 +87,6 @@ def run(args):
         print(f"{name:<20} {per_class_dice[c]:<10.4f} {'':>10}")
     macro_dice = per_class_dice.mean().item()
     print(f"\n{'Macro average':<20} {macro_dice:<10.4f} {macro_iou.item():<10.4f}")
+    print(
+        "\nIf you use MedSegMNIST in your research, please cite the MedSegMNIST paper."
+    )

@@ -312,9 +312,9 @@ If you use MedSegMNIST in your research, please cite:
 
 Please also cite the original source papers of the constituent datasets:
 
-- **BrainSegMNIST3D**: BraTS-Africa (IEEE ISBI 2022)
-- **LungSegMNIST2D**: chest-xray-lungs (multiple sources)
-- **NucleiSegMNIST2D**: NuSeC + MoNuSeg (IEEE ISBI 2019)
+- **BrainSegMNIST3D**: Adewole, Maruf, et al. "The BraTS-Africa dataset: expanding the brain tumor segmentation data to capture African populations." *Radiology: Artificial Intelligence* 7.4 (2025): e240528.
+- **LungSegMNIST2D**: Danilov, Viacheslav; Proutski, Alex; Kirpich, Alexander; Litmanovich, Diana; Gankin, Yuriy (2022), "Chest X-ray dataset for lung segmentation", *Mendeley Data*, V2, doi: 10.17632/8gf9vpkhgy.2
+- **NucleiSegMNIST2D**: (1) Kumar, Neeraj, et al. "A dataset and a technique for generalized nuclear segmentation for computational pathology." *IEEE Transactions on Medical Imaging* 36.7 (2017): 1550–1560. (2) Samet, Refik, et al. "NuSeC: A Dataset for Nuclei Segmentation in Breast Cancer Histopathology Images." *arXiv preprint* arXiv:2507.14272 (2025).
 
 ---
 

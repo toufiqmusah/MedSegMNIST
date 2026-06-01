@@ -120,7 +120,7 @@ class TestBrainSegMNIST3D:
         info("brain3d")
 
 
-class TestLungSegMNIST2D2D:
+class TestLungSegMNIST2D:
     @pytest.mark.requires_data
     def test_init_defaults(self):
         from medsegmnist import LungSegMNIST2D
@@ -160,7 +160,9 @@ class TestLungSegMNIST2D2D:
         from medsegmnist import LungSegMNIST2D
 
         for size in [128, 256, 512]:
-            ds = LungSegMNIST2D(split="train", size=size, root=DATASET_DIR, mmap_mode="r")
+            ds = LungSegMNIST2D(
+                split="train", size=size, root=DATASET_DIR, mmap_mode="r"
+            )
             img, _ = ds[0]
             assert img.ndim == 3
 
@@ -195,7 +197,7 @@ class TestLungSegMNIST2D2D:
         info("lung2d")
 
 
-class TestNucleiSegMNIST2D2D:
+class TestNucleiSegMNIST2D:
     @pytest.mark.requires_data
     def test_init_defaults(self):
         from medsegmnist import NucleiSegMNIST2D

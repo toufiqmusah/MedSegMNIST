@@ -9,6 +9,18 @@ except ImportError:
     Subset = None
 
 DEFAULT_ROOT = os.path.join(os.path.expanduser("~"), ".medsegmnist")
+_citations_shown = set()
+
+
+def _show_citation(cls):
+    citation = getattr(cls, "citation", None)
+    if citation and cls.class_name not in _citations_shown:
+        _citations_shown.add(cls.class_name)
+        print(
+            f"\n[MedSegMNIST] When using {cls.class_name}, please cite:\n"
+            f"  {citation}\n",
+            flush=True,
+        )
 
 
 class MedSegMNIST3D(Dataset):
@@ -110,6 +122,8 @@ class MedSegMNIST3D(Dataset):
         else:
             self.meta = {}
 
+        _show_citation(type(self))
+
     def _validate_size(self):
         if self.size not in self.available_sizes:
             raise ValueError(
@@ -134,6 +148,11 @@ class MedSegMNIST3D(Dataset):
 
         image = np.expand_dims(image, 0).astype(np.float32)
         mask = mask.astype(np.uint8)
+
+        if self.transform:
+            image = self.transform(image)
+        if self.target_transform:
+            mask = self.target_transform(mask)
 
         if self.transform:
             image = self.transform(image)
@@ -331,6 +350,8 @@ class MedSegMNIST2D(Dataset):
                 self.meta = json.load(f)
         else:
             self.meta = {}
+
+        _show_citation(type(self))
 
     def _validate_size(self):
         if self.size not in self.available_sizes:

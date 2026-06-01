@@ -63,7 +63,9 @@ Brain tumour sub-region segmentation from BraTS-Africa (T2-FLAIR).
 LungSegMNIST2D
 ~~~~~~~~~~~~
 
-Lung field segmentation from chest X-rays (Darwin + Montgomery + Shenzhen).
+Lung field segmentation from chest X-rays (Darwin + Montgomery + Shenzhen). If you use this dataset cite:
+
+Danilov, Viacheslav; Proutski, Alex; Kirpich, Alexander; Litmanovich, Diana; Gankin, Yuriy (2022), "Chest X-ray dataset for lung segmentation", *Mendeley Data*, V2, doi: 10.17632/8gf9vpkhgy.2
 
 - **Labels:** 0 = background, 1 = lung
 - **Native resolution:** 512 × 512, grayscale (converted from RGB)
@@ -73,7 +75,10 @@ Lung field segmentation from chest X-rays (Darwin + Montgomery + Shenzhen).
 NucleiSegMNIST2D
 ~~~~~~~~~~~~~~
 
-Nuclei segmentation from NuSeC + MoNuSeg 2018.
+Nuclei segmentation from NuSeC + MoNuSeg 2018. If you use this dataset cite:
+
+1. Kumar, Neeraj, et al. "A dataset and a technique for generalized nuclear segmentation for computational pathology." *IEEE Transactions on Medical Imaging* 36.7 (2017): 1550–1560.
+2. Samet, Refik, et al. "NuSeC: A Dataset for Nuclei Segmentation in Breast Cancer Histopathology Images." *arXiv preprint* arXiv:2507.14272 (2025).
 
 - **Labels:** 0 = background, 1 = nuclei
 - **Channels:** 3 (RGB)
