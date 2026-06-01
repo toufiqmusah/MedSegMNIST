@@ -6,7 +6,9 @@ part of the ``medsegmnist`` package itself.
 
 import sys
 import os
-import torch
+import pytest
+
+torch = pytest.importorskip("torch")
 
 _examples_dir = os.path.join(os.path.dirname(__file__), "..", "examples")
 if _examples_dir not in sys.path:

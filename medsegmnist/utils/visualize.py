@@ -7,14 +7,28 @@ def _ensure_2d(image, mask, slice_idx=None):
         if image.shape[0] == 1:
             image = np.squeeze(image, axis=0)
         elif image.shape[0] == 3 and image.shape[-1] != 3:
-            image = image[0]
+            if slice_idx is None:
+                fg = (mask > 0).sum(axis=(0, 1))
+                slice_idx = int(np.argmax(fg)) if fg.sum() > 0 else image.shape[-1] // 2
+            image = image[:, :, :, slice_idx]
+            if mask.ndim == 4 and mask.shape[0] == 1:
+                mask = mask[0, :, :, slice_idx]
+            elif mask.ndim == 4:
+                mask = mask[:, :, slice_idx]
+            elif mask.ndim == 3:
+                mask = mask[:, :, slice_idx]
+            image = np.transpose(image, (1, 2, 0))
+            return image, mask
         else:
             image, mask = image[0], mask[0]
 
     if image.ndim == 3:
         if image.shape[-1] == 3:
             return image, mask
-        if image.shape[0] in (1, 3):
+        if image.shape[0] == 3:
+            image = np.transpose(image, (1, 2, 0))
+            return image, mask
+        if image.shape[0] == 1:
             image = image[0]
         if image.ndim == 3:
             if slice_idx is None:
@@ -52,7 +66,8 @@ def plot_sample(image, mask, slice_idx=None, label_names=None, ax=None):
 
     img_slice, msk_slice = _ensure_2d(image, mask, slice_idx)
 
-    ax[0].imshow(img_slice, cmap="gray")
+    is_rgb = img_slice.ndim == 3 and img_slice.shape[-1] == 3
+    ax[0].imshow(img_slice, cmap=None if is_rgb else "gray")
     ax[0].set_title("Image")
 
     n_labels = len(np.unique(msk_slice))
@@ -94,7 +109,8 @@ def plot_overlay(image, mask, alpha=0.4, slice_idx=None, ax=None):
 
     img_slice, msk_slice = _ensure_2d(image, mask, slice_idx)
 
-    ax.imshow(img_slice, cmap="gray")
+    is_rgb = img_slice.ndim == 3 and img_slice.shape[-1] == 3
+    ax.imshow(img_slice, cmap=None if is_rgb else "gray")
     ax.imshow(
         msk_slice, cmap="tab10", alpha=alpha, vmin=0, vmax=max(1, msk_slice.max())
     )

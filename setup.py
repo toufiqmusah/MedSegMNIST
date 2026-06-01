@@ -11,16 +11,18 @@ setup(
     packages=find_packages(exclude=["examples", "scripts"]),
     python_requires=">=3.10",
     install_requires=[
-        "torch>=2.0.0",
-        "torchvision>=0.15.0",
-        "torchmetrics>=1.0.0",
-        "lightning>=2.0.0",
         "numpy>=1.24.0",
         "matplotlib>=3.7.0",
         "scikit-learn>=1.3.0",
         "scikit-image>=0.21.0",
     ],
     extras_require={
+        "torch": [
+            "torch>=2.0.0",
+            "torchvision>=0.15.0",
+            "torchmetrics>=1.0.0",
+            "lightning>=2.0.0",
+        ],
         "dev": [
             "pytest>=7.0.0",
             "pytest-cov>=4.0.0",
@@ -32,6 +34,9 @@ setup(
             "torchio>=1.0.0",
             "nibabel>=5.0.0",
             "Pillow>=10.0.0",
+        ],
+        "all": [
+            "medsegmnist[torch,dev,preprocess]",
         ],
     },
     entry_points={

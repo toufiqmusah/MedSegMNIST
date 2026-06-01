@@ -1,5 +1,6 @@
-import torch
 import pytest
+
+torch = pytest.importorskip("torch")
 
 
 class TestDiceScore:

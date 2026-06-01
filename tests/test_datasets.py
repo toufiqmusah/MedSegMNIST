@@ -4,6 +4,7 @@ DATASET_DIR = "/teamspace/studios/this_studio/datasets"
 
 
 class TestBrainSegMNIST3D:
+    @pytest.mark.requires_data
     def test_init_defaults(self):
         from medsegmnist import BrainSegMNIST3D
 
@@ -120,6 +121,7 @@ class TestBrainSegMNIST3D:
 
 
 class TestLungSegMNIST:
+    @pytest.mark.requires_data
     def test_init_defaults(self):
         from medsegmnist import LungSegMNIST
 
@@ -179,6 +181,7 @@ class TestLungSegMNIST:
         assert names["0"] == "background"
         assert "1" in names
 
+    @pytest.mark.requires_data
     def test_init_failures(self):
         from medsegmnist import LungSegMNIST
 
@@ -193,6 +196,7 @@ class TestLungSegMNIST:
 
 
 class TestNucleiSegMNIST:
+    @pytest.mark.requires_data
     def test_init_defaults(self):
         from medsegmnist import NucleiSegMNIST
 

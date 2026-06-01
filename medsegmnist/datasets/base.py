@@ -1,7 +1,12 @@
 import os
 import json
 import numpy as np
-from torch.utils.data import Dataset, Subset
+
+try:
+    from torch.utils.data import Dataset, Subset
+except ImportError:
+    Dataset = object
+    Subset = None
 
 DEFAULT_ROOT = os.path.join(os.path.expanduser("~"), ".medsegmnist")
 
@@ -162,6 +167,10 @@ class MedSegMNIST3D(Dataset):
         train_subset : Subset
         val_subset : Subset
         """
+        if Subset is None:
+            raise ImportError(
+                "PyTorch is required for get_fold(). Install with: pip install medsegmnist[torch]"
+            )
         assert self.split == "train", "get_fold() only valid for split='train'"
         fold = self.meta["cv_folds"][f"fold_{fold_index}"]
         return Subset(self, fold["train"]), Subset(self, fold["val"])
@@ -383,6 +392,10 @@ class MedSegMNIST2D(Dataset):
         train_subset : Subset
         val_subset : Subset
         """
+        if Subset is None:
+            raise ImportError(
+                "PyTorch is required for get_fold(). Install with: pip install medsegmnist[torch]"
+            )
         assert self.split == "train", "get_fold() only valid for split='train'"
         fold = self.meta["cv_folds"][f"fold_{fold_index}"]
         return Subset(self, fold["train"]), Subset(self, fold["val"])

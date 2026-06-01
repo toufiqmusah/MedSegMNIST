@@ -42,13 +42,22 @@ class TestEnsure2D:
         assert img_out.shape == (64, 64, 3)
         assert msk_out.shape == (64, 64)
 
+    def test_rgb_channels_first(self):
+        from medsegmnist.utils.visualize import _ensure_2d
+
+        img = np.random.randn(3, 64, 64)
+        msk = np.random.randint(0, 2, (64, 64))
+        img_out, msk_out = _ensure_2d(img, msk)
+        assert img_out.shape == (64, 64, 3)
+        assert msk_out.shape == (64, 64)
+
     def test_4d_with_3_channels(self):
         from medsegmnist.utils.visualize import _ensure_2d
 
         img = np.random.randn(3, 64, 64, 32)
         msk = np.random.randint(0, 2, (64, 64, 32))
         img_out, msk_out = _ensure_2d(img, msk)
-        assert img_out.ndim == 2
+        assert img_out.shape == (64, 64, 3)
         assert msk_out.ndim == 2
 
 
