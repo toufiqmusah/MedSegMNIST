@@ -197,7 +197,7 @@ def resize_image_mask(image, mask, target_size):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Preprocess NucleiSegMNIST")
+    parser = argparse.ArgumentParser(description="Preprocess NucleiSegMNIST2D")
     parser.add_argument("--raw_dir", default=RAW_DIR)
     parser.add_argument("--out_dir", default=OUT_DIR)
     parser.add_argument(
@@ -294,7 +294,7 @@ def main():
 
     meta_dict = {
         "flag": FLAG,
-        "class_name": "NucleiSegMNIST",
+        "class_name": "NucleiSegMNIST2D",
         "name": "NuSeC + MoNuSeg 2018",
         "version": "1.0.0",
         "dimensionality": "2D",

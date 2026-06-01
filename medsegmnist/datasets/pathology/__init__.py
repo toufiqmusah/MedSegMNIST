@@ -1,3 +1,3 @@
-from .nuclei import NucleiSegMNIST
+from .nuclei import NucleiSegMNIST2D
 
-__all__ = ["NucleiSegMNIST"]
+__all__ = ["NucleiSegMNIST2D"]

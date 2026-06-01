@@ -27,13 +27,13 @@ Quick start
 
 .. code-block:: python
 
-   from medsegmnist import LungSegMNIST, list_datasets
+   from medsegmnist import LungSegMNIST2D, list_datasets
 
    # List all available datasets
    print(list_datasets())
 
    # Load a dataset
-   ds = LungSegMNIST(split="train", size=128, root="/path/to/datasets")
+   ds = LungSegMNIST2D(split="train", size=128, root="/path/to/datasets")
    print(len(ds))  # 5448
 
    # Access a sample
@@ -73,7 +73,7 @@ Cross-validation folds
 
 .. code-block:: python
 
-   ds = LungSegMNIST(split="train", size=128)
+   ds = LungSegMNIST2D(split="train", size=128)
    train_subset, val_subset = ds.get_fold(0)
    print(len(train_subset), len(val_subset))
 
@@ -82,12 +82,12 @@ Training with your own model
 
 .. code-block:: python
 
-   from medsegmnist import LungSegMNIST
+   from medsegmnist import LungSegMNIST2D
    from medsegmnist.training import MedSegModule
    import lightning as L
    from torch.utils.data import DataLoader
 
-   ds = LungSegMNIST(split="train", size=128)
+   ds = LungSegMNIST2D(split="train", size=128)
    train_subset, val_subset = ds.get_fold(0)
 
    train_loader = DataLoader(train_subset, batch_size=16, shuffle=True)

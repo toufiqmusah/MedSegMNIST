@@ -22,8 +22,8 @@ def test_top_level_imports():
     import medsegmnist
 
     assert hasattr(medsegmnist, "BrainSegMNIST3D")
-    assert hasattr(medsegmnist, "LungSegMNIST")
-    assert hasattr(medsegmnist, "NucleiSegMNIST")
+    assert hasattr(medsegmnist, "LungSegMNIST2D")
+    assert hasattr(medsegmnist, "NucleiSegMNIST2D")
     assert hasattr(medsegmnist, "info")
     assert hasattr(medsegmnist, "list_datasets")
     assert hasattr(medsegmnist, "__version__")

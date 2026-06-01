@@ -16,14 +16,14 @@ def test_registry_contents():
     assert brain["available_sizes"] == [96, 128, 224, "native"]
 
     lung = DATASET_REGISTRY["lung2d"]
-    assert lung["class"] == "LungSegMNIST"
+    assert lung["class"] == "LungSegMNIST2D"
     assert lung["dimensionality"] == "2D"
     assert lung["modality"] == "X-ray"
     assert lung["n_classes"] == 2
     assert lung["available_sizes"] == [128, 256, 512]
 
     nuclei = DATASET_REGISTRY["nuclei2d"]
-    assert nuclei["class"] == "NucleiSegMNIST"
+    assert nuclei["class"] == "NucleiSegMNIST2D"
     assert nuclei["dimensionality"] == "2D"
     assert nuclei["modality"] == "Pathology"
     assert nuclei["n_classes"] == 2

@@ -25,14 +25,14 @@ A collection of **standardised biomedical image segmentation datasets** in NPZ f
 | Flag | Dataset | Modality | Anatomy | Dim | Classes | Train | Test | Sizes |
 |------|---------|----------|---------|-----|---------|-------|------|-------|
 | `brain3d` | BrainSegMNIST3D | MRI | Brain (gliomas) | 3D | 4 | 116 | 30 | 96, 128, 224, native |
-| `lung2d` | LungSegMNIST | X-ray | Chest / Lungs | 2D | 2 | 5,448 | 1,362 | 128, 256, 512 |
-| `nuclei2d` | NucleiSegMNIST | Pathology | Multi-organ (nuclei) | 2D | 2 | 112 | 39 | 256, 512, native |
+| `lung2d` | LungSegMNIST2D | X-ray | Chest / Lungs | 2D | 2 | 5,448 | 1,362 | 128, 256, 512 |
+| `nuclei2d` | NucleiSegMNIST2D | Pathology | Multi-organ (nuclei) | 2D | 2 | 112 | 39 | 256, 512, native |
 
 **BrainSegMNIST3D** — Brain tumour sub-region segmentation from BraTS-Africa (T2-FLAIR). Labels: background (0), necrotic core (1), oedema (2), enhancing tumour (3). Native resolution: 240×240×155 at 1.0 mm isotropic.
 
-**LungSegMNIST** — Lung field segmentation from chest X-rays (Darwin + Montgomery + Shenzhen). Binary: background (0), lung (1). Native resolution: 512×512, converted from RGB to grayscale.
+**LungSegMNIST2D** — Lung field segmentation from chest X-rays (Darwin + Montgomery + Shenzhen). Binary: background (0), lung (1). Native resolution: 512×512, converted from RGB to grayscale.
 
-**NucleiSegMNIST** — Nuclei segmentation from NuSeC + MoNuSeg 2018. RGB input (3 channels). Binary: background (0), nuclei (1). Native resolution: 1024×1024 (MoNuSeg centre-padded to match).
+**NucleiSegMNIST2D** — Nuclei segmentation from NuSeC + MoNuSeg 2018. RGB input (3 channels). Binary: background (0), nuclei (1). Native resolution: 1024×1024 (MoNuSeg centre-padded to match).
 
 ---
 
@@ -59,13 +59,13 @@ pip install "medsegmnist[dev]"
 ## Quick Start
 
 ```python
-from medsegmnist import LungSegMNIST, list_datasets
+from medsegmnist import LungSegMNIST2D, list_datasets
 
 # List all available datasets
 print(list_datasets())
 
 # Load a dataset
-ds = LungSegMNIST(split="train", size=128, root="/path/to/datasets")
+ds = LungSegMNIST2D(split="train", size=128, root="/path/to/datasets")
 print(len(ds))  # 5448
 
 # Access a sample
@@ -92,13 +92,13 @@ info("brain3d")
 ## Training
 
 ```python
-from medsegmnist import LungSegMNIST
+from medsegmnist import LungSegMNIST2D
 from medsegmnist.training import MedSegModule
 import lightning as L
 from torch.utils.data import DataLoader
 
 # Dataset
-ds = LungSegMNIST(split="train", size=128, root="/path/to/datasets")
+ds = LungSegMNIST2D(split="train", size=128, root="/path/to/datasets")
 train_subset, val_subset = ds.get_fold(0)
 
 train_loader = DataLoader(train_subset, batch_size=16, shuffle=True)
@@ -161,7 +161,7 @@ Macro average   0.9820    0.9649
 ```python
 from medsegmnist.utils import plot_sample, plot_grid
 
-ds = LungSegMNIST(split="test", size=128, root="/path/to/datasets")
+ds = LungSegMNIST2D(split="test", size=128, root="/path/to/datasets")
 img, mask = ds[0]
 
 fig, ax = plt.subplots(1, 2)
@@ -178,8 +178,8 @@ plt.show()
 | Class | Flag | Base class | Channels | Classes | Sizes |
 |-------|------|------------|----------|---------|-------|
 | `BrainSegMNIST3D` | `brain3d` | `MedSegMNIST3D` | 1 | 4 | 96, 128, 224, native |
-| `LungSegMNIST` | `lung2d` | `MedSegMNIST2D` | 1 | 2 | 128, 256, 512 |
-| `NucleiSegMNIST` | `nuclei2d` | `MedSegMNIST2D` | 3 | 2 | 256, 512, native |
+| `LungSegMNIST2D` | `lung2d` | `MedSegMNIST2D` | 1 | 2 | 128, 256, 512 |
+| `NucleiSegMNIST2D` | `nuclei2d` | `MedSegMNIST2D` | 3 | 2 | 256, 512, native |
 
 All dataset classes share the same interface (inherited from `MedSegMNIST2D` or `MedSegMNIST3D`):
 
@@ -204,7 +204,7 @@ print(list_datasets())
 
 # Filter by dimensionality
 print(list_datasets(dimensionality="2D"))
-# → [("lung2d", "LungSegMNIST", "X-ray"), ("nuclei2d", "NucleiSegMNIST", "Pathology")]
+# → [("lung2d", "LungSegMNIST2D", "X-ray"), ("nuclei2d", "NucleiSegMNIST2D", "Pathology")]
 
 # Get metadata
 info("brain3d")
@@ -271,8 +271,8 @@ medsegmnist/
 ├── datasets/
 │   ├── base.py              # MedSegMNIST2D / MedSegMNIST3D base classes
 │   ├── mri/brain.py         # BrainSegMNIST3D
-│   ├── xray/lung.py         # LungSegMNIST
-│   └── pathology/nuclei.py  # NucleiSegMNIST
+│   ├── xray/lung.py         # LungSegMNIST2D
+│   └── pathology/nuclei.py  # NucleiSegMNIST2D
 ├── cli/
 │   ├── __init__.py          # medsegmnist CLI entry point
 │   ├── train.py             # train subcommand
@@ -313,8 +313,8 @@ If you use MedSegMNIST in your research, please cite:
 Please also cite the original source papers of the constituent datasets:
 
 - **BrainSegMNIST3D**: BraTS-Africa (IEEE ISBI 2022)
-- **LungSegMNIST**: chest-xray-lungs (multiple sources)
-- **NucleiSegMNIST**: NuSeC + MoNuSeg (IEEE ISBI 2019)
+- **LungSegMNIST2D**: chest-xray-lungs (multiple sources)
+- **NucleiSegMNIST2D**: NuSeC + MoNuSeg (IEEE ISBI 2019)
 
 ---
 
@@ -327,7 +327,7 @@ The constituent datasets retain their original licenses:
 | Dataset | License |
 |---------|---------|
 | BrainSegMNIST3D | BraTS — CC BY 4.0 |
-| LungSegMNIST | Varies by source subset |
-| NucleiSegMNIST | Research purposes (original terms apply) |
+| LungSegMNIST2D | Varies by source subset |
+| NucleiSegMNIST2D | Research purposes (original terms apply) |
 
 These datasets are **not** intended for clinical use.

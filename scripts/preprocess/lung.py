@@ -14,7 +14,7 @@ from common import (
 )
 
 FLAG = "lung2d"
-CLASS_NAME = "LungSegMNIST"
+CLASS_NAME = "LungSegMNIST2D"
 MODALITY = "X-ray"
 ANATOMY = "Lung"
 DIMENSIONALITY = "2D"

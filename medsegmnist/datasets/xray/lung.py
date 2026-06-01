@@ -3,9 +3,9 @@ from ...registry import register
 
 
 @register
-class LungSegMNIST(MedSegMNIST2D):
+class LungSegMNIST2D(MedSegMNIST2D):
     flag = "lung2d"
-    class_name = "LungSegMNIST"
+    class_name = "LungSegMNIST2D"
     available_sizes = [128, 256, 512]
     n_classes = 2
     modality = "X-ray"

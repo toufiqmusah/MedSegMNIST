@@ -69,8 +69,8 @@ Project structure
    ├── datasets/
    │   ├── base.py              # MedSegMNIST2D / MedSegMNIST3D
    │   ├── mri/brain.py         # BrainSegMNIST3D
-   │   ├── xray/lung.py         # LungSegMNIST
-   │   └── pathology/nuclei.py  # NucleiSegMNIST
+   │   ├── xray/lung.py         # LungSegMNIST2D
+   │   └── pathology/nuclei.py  # NucleiSegMNIST2D
    ├── cli/                     # CLI entry points (medsegmnist train/eval)
    ├── training/                # DiceScore, DiceLoss, MedSegModule
    └── utils/                   # Visualisation utilities

@@ -120,35 +120,35 @@ class TestBrainSegMNIST3D:
         info("brain3d")
 
 
-class TestLungSegMNIST:
+class TestLungSegMNIST2D2D:
     @pytest.mark.requires_data
     def test_init_defaults(self):
-        from medsegmnist import LungSegMNIST
+        from medsegmnist import LungSegMNIST2D
 
-        ds = LungSegMNIST(split="train", root=DATASET_DIR)
+        ds = LungSegMNIST2D(split="train", root=DATASET_DIR)
         assert ds.flag == "lung2d"
         assert ds.dimensionality == "2D"
         assert ds.n_classes == 2
 
     @pytest.mark.requires_data
     def test_len_train(self):
-        from medsegmnist import LungSegMNIST
+        from medsegmnist import LungSegMNIST2D
 
-        ds = LungSegMNIST(split="train", size=128, root=DATASET_DIR)
+        ds = LungSegMNIST2D(split="train", size=128, root=DATASET_DIR)
         assert len(ds) == 5448
 
     @pytest.mark.requires_data
     def test_len_test(self):
-        from medsegmnist import LungSegMNIST
+        from medsegmnist import LungSegMNIST2D
 
-        ds = LungSegMNIST(split="test", size=128, root=DATASET_DIR)
+        ds = LungSegMNIST2D(split="test", size=128, root=DATASET_DIR)
         assert len(ds) == 1362
 
     @pytest.mark.requires_data
     def test_getitem_shape(self):
-        from medsegmnist import LungSegMNIST
+        from medsegmnist import LungSegMNIST2D
 
-        ds = LungSegMNIST(split="train", size=128, root=DATASET_DIR)
+        ds = LungSegMNIST2D(split="train", size=128, root=DATASET_DIR)
         img, msk = ds[0]
         assert img.shape == (1, 128, 128)
         assert msk.shape == (128, 128)
@@ -157,36 +157,36 @@ class TestLungSegMNIST:
 
     @pytest.mark.requires_data
     def test_all_sizes(self):
-        from medsegmnist import LungSegMNIST
+        from medsegmnist import LungSegMNIST2D
 
         for size in [128, 256, 512]:
-            ds = LungSegMNIST(split="train", size=size, root=DATASET_DIR, mmap_mode="r")
+            ds = LungSegMNIST2D(split="train", size=size, root=DATASET_DIR, mmap_mode="r")
             img, _ = ds[0]
             assert img.ndim == 3
 
     @pytest.mark.requires_data
     def test_fold(self):
-        from medsegmnist import LungSegMNIST
+        from medsegmnist import LungSegMNIST2D
 
-        ds = LungSegMNIST(split="train", size=128, root=DATASET_DIR)
+        ds = LungSegMNIST2D(split="train", size=128, root=DATASET_DIR)
         train_subset, val_subset = ds.get_fold(0)
         assert len(train_subset) + len(val_subset) == len(ds)
 
     @pytest.mark.requires_data
     def test_get_label_names(self):
-        from medsegmnist import LungSegMNIST
+        from medsegmnist import LungSegMNIST2D
 
-        ds = LungSegMNIST(split="train", root=DATASET_DIR)
+        ds = LungSegMNIST2D(split="train", root=DATASET_DIR)
         names = ds.get_label_names()
         assert names["0"] == "background"
         assert "1" in names
 
     @pytest.mark.requires_data
     def test_init_failures(self):
-        from medsegmnist import LungSegMNIST
+        from medsegmnist import LungSegMNIST2D
 
         with pytest.raises((ValueError, AssertionError)):
-            LungSegMNIST(split="invalid", root=DATASET_DIR)
+            LungSegMNIST2D(split="invalid", root=DATASET_DIR)
 
     @pytest.mark.requires_data
     def test_info(self):
@@ -195,12 +195,12 @@ class TestLungSegMNIST:
         info("lung2d")
 
 
-class TestNucleiSegMNIST:
+class TestNucleiSegMNIST2D2D:
     @pytest.mark.requires_data
     def test_init_defaults(self):
-        from medsegmnist import NucleiSegMNIST
+        from medsegmnist import NucleiSegMNIST2D
 
-        ds = NucleiSegMNIST(split="train", root=DATASET_DIR)
+        ds = NucleiSegMNIST2D(split="train", root=DATASET_DIR)
         assert ds.flag == "nuclei2d"
         assert ds.dimensionality == "2D"
         assert ds.n_classes == 2
@@ -208,23 +208,23 @@ class TestNucleiSegMNIST:
 
     @pytest.mark.requires_data
     def test_len_train(self):
-        from medsegmnist import NucleiSegMNIST
+        from medsegmnist import NucleiSegMNIST2D
 
-        ds = NucleiSegMNIST(split="train", size=256, root=DATASET_DIR)
+        ds = NucleiSegMNIST2D(split="train", size=256, root=DATASET_DIR)
         assert len(ds) == 112
 
     @pytest.mark.requires_data
     def test_len_test(self):
-        from medsegmnist import NucleiSegMNIST
+        from medsegmnist import NucleiSegMNIST2D
 
-        ds = NucleiSegMNIST(split="test", size=256, root=DATASET_DIR)
+        ds = NucleiSegMNIST2D(split="test", size=256, root=DATASET_DIR)
         assert len(ds) == 39
 
     @pytest.mark.requires_data
     def test_getitem_shape(self):
-        from medsegmnist import NucleiSegMNIST
+        from medsegmnist import NucleiSegMNIST2D
 
-        ds = NucleiSegMNIST(split="train", size=256, root=DATASET_DIR)
+        ds = NucleiSegMNIST2D(split="train", size=256, root=DATASET_DIR)
         img, msk = ds[0]
         assert img.shape == (3, 256, 256)
         assert msk.shape == (256, 256)
@@ -233,10 +233,10 @@ class TestNucleiSegMNIST:
 
     @pytest.mark.requires_data
     def test_all_sizes(self):
-        from medsegmnist import NucleiSegMNIST
+        from medsegmnist import NucleiSegMNIST2D
 
         for size in [256, 512, "native"]:
-            ds = NucleiSegMNIST(
+            ds = NucleiSegMNIST2D(
                 split="train", size=size, root=DATASET_DIR, mmap_mode="r"
             )
             img, _ = ds[0]
@@ -244,18 +244,18 @@ class TestNucleiSegMNIST:
 
     @pytest.mark.requires_data
     def test_get_label_names(self):
-        from medsegmnist import NucleiSegMNIST
+        from medsegmnist import NucleiSegMNIST2D
 
-        ds = NucleiSegMNIST(split="train", root=DATASET_DIR)
+        ds = NucleiSegMNIST2D(split="train", root=DATASET_DIR)
         names = ds.get_label_names()
         assert names["0"] == "background"
         assert names["1"] == "nuclei"
 
     @pytest.mark.requires_data
     def test_fold(self):
-        from medsegmnist import NucleiSegMNIST
+        from medsegmnist import NucleiSegMNIST2D
 
-        ds = NucleiSegMNIST(split="train", size=256, root=DATASET_DIR)
+        ds = NucleiSegMNIST2D(split="train", size=256, root=DATASET_DIR)
         train_subset, val_subset = ds.get_fold(0)
         assert len(train_subset) + len(val_subset) == len(ds)
 

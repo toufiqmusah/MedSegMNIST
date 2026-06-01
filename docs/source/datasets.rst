@@ -29,7 +29,7 @@ Supported datasets
      - 30
      - 96, 128, 224, native
    * - ``lung2d``
-     - LungSegMNIST
+     - LungSegMNIST2D
      - X-ray
      - Chest / Lungs
      - 2D
@@ -38,7 +38,7 @@ Supported datasets
      - 1,362
      - 128, 256, 512
    * - ``nuclei2d``
-     - NucleiSegMNIST
+     - NucleiSegMNIST2D
      - Pathology
      - Multi-organ (nuclei)
      - 2D
@@ -60,7 +60,7 @@ Brain tumour sub-region segmentation from BraTS-Africa (T2-FLAIR).
 - **Train:** 116 patients, **Test:** 30 patients
 - **Sizes:** 96, 128, 224, native
 
-LungSegMNIST
+LungSegMNIST2D
 ~~~~~~~~~~~~
 
 Lung field segmentation from chest X-rays (Darwin + Montgomery + Shenzhen).
@@ -70,7 +70,7 @@ Lung field segmentation from chest X-rays (Darwin + Montgomery + Shenzhen).
 - **Train:** 5,448 images, **Test:** 1,362 images
 - **Sizes:** 128, 256, 512
 
-NucleiSegMNIST
+NucleiSegMNIST2D
 ~~~~~~~~~~~~~~
 
 Nuclei segmentation from NuSeC + MoNuSeg 2018.

@@ -1,9 +1,9 @@
 from .mri.brain import BrainSegMNIST3D
-from .xray.lung import LungSegMNIST
-from .pathology.nuclei import NucleiSegMNIST
+from .xray.lung import LungSegMNIST2D
+from .pathology.nuclei import NucleiSegMNIST2D
 
 __all__ = [
     "BrainSegMNIST3D",
-    "LungSegMNIST",
-    "NucleiSegMNIST",
+    "LungSegMNIST2D",
+    "NucleiSegMNIST2D",
 ]
