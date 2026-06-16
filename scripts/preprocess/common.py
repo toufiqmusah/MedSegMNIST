@@ -1,27 +1,23 @@
 import os
 import json
 import hashlib
+import tempfile
+import zipfile
+import shutil
 import numpy as np
 import torchio as tio
 from sklearn.model_selection import train_test_split, KFold
 
 
-def resample_and_resize(image_np, mask_np, target_spacing, target_shape):
+def resample_and_resize(image_np, mask_np, target_shape):
     image_4d = image_np[np.newaxis].astype(np.float32)
     mask_4d = mask_np[np.newaxis].astype(np.int32)
     subject = tio.Subject(
         image=tio.ScalarImage(tensor=image_4d),
         mask=tio.LabelMap(tensor=mask_4d),
     )
-    transforms = [tio.Resample(target_spacing)]
-    if target_shape is not None:
-        transforms.append(tio.Resize(target_shape))
-    out = tio.Compose(transforms)(subject)
+    out = tio.Resize(target_shape)(subject)
     return out.image.numpy()[0], out.mask.numpy()[0].astype(np.uint8)
-
-
-def resample_only(image_np, mask_np, target_spacing):
-    return resample_and_resize(image_np, mask_np, target_spacing, target_shape=None)
 
 
 def normalize_mri(volume_np, low=0.5, high=99.5):
@@ -66,6 +62,17 @@ def normalize_rgb(image_np):
     return (image_np / 255.0).astype(np.float32)
 
 
+def normalize_ultrasound(image_np, low=1.0, high=99.0):
+    image = image_np.astype(np.float32)
+    lo, hi = np.percentile(image, [low, high])
+    image = np.clip(image, lo, hi)
+    mean = image.mean()
+    std = image.std()
+    if std > 0:
+        image = (image - mean) / std
+    return image.astype(np.float32)
+
+
 def make_splits(n_samples, test_size=0.20, n_folds=5, seed=42):
     indices = np.arange(n_samples)
     train_idx, test_idx = train_test_split(
@@ -101,6 +108,27 @@ def save_npz(out_path, train_images, train_masks, test_images, test_masks):
         test_images=test_images,
         test_masks=test_masks,
     )
+
+
+def save_large_npz(out_path, train_images, train_masks, test_images, test_masks):
+    temp_dir = tempfile.mkdtemp()
+    try:
+        arrays = {
+            "train_images": train_images,
+            "train_masks": train_masks,
+            "test_images": test_images,
+            "test_masks": test_masks,
+        }
+        npy_paths = {}
+        for name, arr in arrays.items():
+            path = os.path.join(temp_dir, f"{name}.npy")
+            np.save(path, arr)
+            npy_paths[name] = path
+        with zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for name in ["train_images", "train_masks", "test_images", "test_masks"]:
+                zf.write(npy_paths[name], f"{name}.npy")
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 def save_metadata(out_path, meta_dict):

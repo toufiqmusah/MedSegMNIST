@@ -12,9 +12,12 @@ Typical usage::
     image, mask = ds[0]
 """
 
+from .datasets.ct.abdomen import AbdomenSegMNIST3D
 from .datasets.mri.brain import BrainSegMNIST3D
 from .datasets.xray.lung import LungSegMNIST2D
 from .datasets.pathology.nuclei import NucleiSegMNIST2D
+from .datasets.ultrasound.breast import BreastSegMNIST
+from .datasets.fundus.fives import FundusSegMNIST2D
 
 from .registry import info, list_datasets
 from . import utils
@@ -22,9 +25,12 @@ from . import utils
 __version__ = "0.1.0"
 
 __all__ = [
+    "AbdomenSegMNIST3D",
     "BrainSegMNIST3D",
     "LungSegMNIST2D",
     "NucleiSegMNIST2D",
+    "BreastSegMNIST",
+    "FundusSegMNIST2D",
     "info",
     "list_datasets",
     "utils",

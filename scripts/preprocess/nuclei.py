@@ -220,11 +220,8 @@ def main():
     monuseg_train, monuseg_test = load_monuseg()
     print(f"  {len(monuseg_train)} train, {len(monuseg_test)} test")
 
-    # Preserve original dataset splits: train = NuSeC_train + MoNuSeg_train,
-    # test = NuSeC_test + MoNuSeg_test
-    train_samples = nusec_train + monuseg_train
-    test_samples = nusec_test + monuseg_test
-    print(f"\nTotal: {len(train_samples)} train, {len(test_samples)} test")
+    all_samples = nusec_train + nusec_test + monuseg_train + monuseg_test
+    print(f"\nTotal: {len(all_samples)}")
 
     def process_samples(samples):
         images = []
@@ -237,18 +234,15 @@ def main():
             meta.append({"source": s["source"]})
         return np.stack(images, axis=0), np.stack(masks, axis=0), meta
 
-    train_images, train_masks, train_meta = process_samples(train_samples)
-    test_images, test_masks, test_meta = process_samples(test_samples)
-    print(f"Train images: {train_images.shape}, masks: {train_masks.shape}")
-    print(f"Test images: {test_images.shape}, masks: {test_masks.shape}")
+    all_images, all_masks, all_meta = process_samples(all_samples)
+    print(f"Total images: {all_images.shape}, masks: {all_masks.shape}")
 
-    # CV folds on training set only
     kf = KFold(n_splits=5, shuffle=True, random_state=42)
     cv_folds = {}
-    for i, (tr, va) in enumerate(kf.split(train_images)):
+    for i, (tr, te) in enumerate(kf.split(all_images)):
         cv_folds[f"fold_{i}"] = {
             "train": tr.tolist(),
-            "val": va.tolist(),
+            "test": te.tolist(),
         }
 
     sizes_to_process = [s.strip() for s in args.sizes.split(",")]
@@ -256,32 +250,22 @@ def main():
     for size_str in sizes_to_process:
         if size_str == "native":
             suffix = "native"
-            img_out = normalize_rgb(train_images.copy())
-            msk_out = train_masks.copy()
-            tst_img_out = normalize_rgb(test_images.copy())
-            tst_msk_out = test_masks.copy()
+            img_out = normalize_rgb(all_images.copy())
+            msk_out = all_masks.copy()
         else:
             size = int(size_str)
             suffix = str(size)
             config = STANDARDISED_SIZES[size]
             target_shape = config["shape"]
-
-            train_resized = [
-                resize_image_mask(train_images[i], train_masks[i], target_shape)
-                for i in range(len(train_images))
+            resized = [
+                resize_image_mask(all_images[i], all_masks[i], target_shape)
+                for i in range(len(all_images))
             ]
-            img_out = normalize_rgb(np.stack([r[0] for r in train_resized], axis=0))
-            msk_out = np.stack([r[1] for r in train_resized], axis=0)
-
-            test_resized = [
-                resize_image_mask(test_images[i], test_masks[i], target_shape)
-                for i in range(len(test_images))
-            ]
-            tst_img_out = normalize_rgb(np.stack([r[0] for r in test_resized], axis=0))
-            tst_msk_out = np.stack([r[1] for r in test_resized], axis=0)
+            img_out = normalize_rgb(np.stack([r[0] for r in resized], axis=0))
+            msk_out = np.stack([r[1] for r in resized], axis=0)
 
         npz_path = os.path.join(args.out_dir, f"{FLAG}_{suffix}.npz")
-        save_npz(npz_path, img_out, msk_out, tst_img_out, tst_msk_out)
+        save_npz(npz_path, img_out, msk_out, img_out[:0], msk_out[:0])
         print(f"  Saved: {npz_path} ({os.path.getsize(npz_path) / 1e6:.0f} MB)")
 
         _write_checksum(
@@ -306,7 +290,7 @@ def main():
         ],
         "license": "Research purposes",
         "redistribution_allowed": False,
-        "split_strategy": "by_source_original_splits",
+        "split_strategy": "5-fold_cv",
         "original_split_details": {
             "nusec": {"train": 75, "test": 25},
             "monuseg": {"train": 37, "test": 14},
@@ -324,10 +308,10 @@ def main():
         "normalization": "rgb_255",
         "label_names": label_names,
         "label_original_values": {"0": 0, "1": 1},
-        "n_train": len(train_images),
-        "n_test": len(test_images),
+        "n_total": len(all_images),
+        "n_folds": 5,
         "cv_folds": cv_folds,
-        "per_sample_metadata": train_meta + test_meta,
+        "per_sample_metadata": all_meta,
     }
 
     json_path = os.path.join(args.out_dir, f"{FLAG}.json")
