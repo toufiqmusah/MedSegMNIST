@@ -1,5 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+
+_SEG_CMAP = mcolors.ListedColormap(
+    ["black", "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
+     "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+)
 
 
 def _ensure_2d(image, mask, slice_idx=None):
@@ -61,7 +67,8 @@ def plot_sample(image, mask, slice_idx=None, label_names=None, ax=None):
     -------
     ax
     """
-    if ax is None:
+    own_fig = ax is None
+    if own_fig:
         _, ax = plt.subplots(1, 2, figsize=(10, 5))
 
     img_slice, msk_slice = _ensure_2d(image, mask, slice_idx)
@@ -70,20 +77,16 @@ def plot_sample(image, mask, slice_idx=None, label_names=None, ax=None):
     ax[0].imshow(img_slice, cmap=None if is_rgb else "gray")
     ax[0].set_title("Image")
 
-    n_labels = len(np.unique(msk_slice))
-    ax[1].imshow(
-        msk_slice,
-        cmap="tab10" if n_labels <= 10 else "viridis",
-        vmin=0,
-        vmax=n_labels - 1,
-    )
+    n_labels = int(msk_slice.max()) + 1
+    ax[1].imshow(msk_slice, cmap=_SEG_CMAP, vmin=0, vmax=n_labels - 1)
     ax[1].set_title("Mask")
 
     for a in ax:
         a.axis("off")
 
-    plt.tight_layout()
-    return ax
+    if own_fig:
+        plt.tight_layout()
+        plt.show()
 
 
 def plot_overlay(image, mask, alpha=0.4, slice_idx=None, ax=None):
@@ -104,19 +107,22 @@ def plot_overlay(image, mask, alpha=0.4, slice_idx=None, ax=None):
     -------
     ax
     """
-    if ax is None:
+    own_fig = ax is None
+    if own_fig:
         _, ax = plt.subplots(figsize=(6, 6))
 
     img_slice, msk_slice = _ensure_2d(image, mask, slice_idx)
 
     is_rgb = img_slice.ndim == 3 and img_slice.shape[-1] == 3
     ax.imshow(img_slice, cmap=None if is_rgb else "gray")
-    ax.imshow(
-        msk_slice, cmap="tab10", alpha=alpha, vmin=0, vmax=max(1, msk_slice.max())
-    )
+    n_labels = int(msk_slice.max()) + 1
+    ax.imshow(msk_slice, cmap=_SEG_CMAP, alpha=alpha, vmin=0, vmax=n_labels - 1)
     ax.set_title("Overlay")
     ax.axis("off")
-    return ax
+
+    if own_fig:
+        plt.tight_layout()
+        plt.show()
 
 
 def plot_grid(images, masks, n_cols=4, slice_idx=None):
