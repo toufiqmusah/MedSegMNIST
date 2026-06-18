@@ -15,10 +15,13 @@ Typical usage::
 from .datasets.ct.abdomen import AbdomenSegMNIST3D
 from .datasets.mri.brain import BrainSegMNIST3D
 from .datasets.mri.spine import SpineSegMNIST3D
+from .datasets.mri.knee import KneeSegMNIST3D
 from .datasets.xray.lung import LungSegMNIST2D
 from .datasets.pathology.nuclei import NucleiSegMNIST2D
+from .datasets.endoscopy.polyp import PolypSegMNIST2D
 from .datasets.ultrasound.breast import BreastSegMNIST
 from .datasets.fundus.fives import FundusSegMNIST2D
+from .datasets.dermoscopy.derm import SkinSegMNIST2D
 
 from .registry import info, list_datasets
 from . import utils
@@ -29,10 +32,13 @@ __all__ = [
     "AbdomenSegMNIST3D",
     "BrainSegMNIST3D",
     "SpineSegMNIST3D",
+    "KneeSegMNIST3D",
     "LungSegMNIST2D",
     "NucleiSegMNIST2D",
+    "PolypSegMNIST2D",
     "BreastSegMNIST",
     "FundusSegMNIST2D",
+    "SkinSegMNIST2D",
     "info",
     "list_datasets",
     "utils",

@@ -21,7 +21,7 @@ from scripts.preprocess.common import resample_and_resize, save_large_npz, save_
 
 # ── Config ──────────────────────────────────────────────────
 DATASET_NAME = "spine3d"
-OUT_DIR = "/teamspace/studios/this_studio/MedSegMNIST/datasets"
+OUT_DIR = "/teamspace/studios/this_studio/MedSegMNIST/datasets/spine"
 SEG_DIR = "/teamspace/studios/this_studio/dataset-raw/spine/segmentations"
 IMG_ZIP = "/teamspace/studios/this_studio/dataset-raw/spine/imaging.zip"
 SIZES = [64, 96, 128, 192]

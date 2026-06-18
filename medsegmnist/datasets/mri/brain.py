@@ -6,6 +6,7 @@ from ...registry import register
 class BrainSegMNIST3D(MedSegMNIST3D):
     flag = "brain3d"
     class_name = "BrainSegMNIST3D"
+    organ = "brain"
     available_sizes = [96, 128, 224, "native"]
     n_classes = 4
     modality = "MRI"

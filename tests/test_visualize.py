@@ -91,6 +91,6 @@ class TestPlotGrid:
 
         images = [np.random.randn(64, 64) for _ in range(4)]
         masks = [np.random.randint(0, 2, (64, 64)) for _ in range(4)]
-        fig = plot_grid(images, masks, n_cols=2)
+        fig = plot_grid(images=images, masks=masks, n_cols=2)
         assert fig is not None
         plt.close(fig)

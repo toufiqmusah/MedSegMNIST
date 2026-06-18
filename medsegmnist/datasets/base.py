@@ -1,6 +1,19 @@
 import os
 import json
 import numpy as np
+import threading
+
+# Module-level context: set by __getitem__ so viz functions auto-detect
+# the active dataset's view_axis / rot90_k without extra parameters.
+_viz_ctx = threading.local()
+_viz_ctx.view_axis = -1
+_viz_ctx.rot90_k = 0
+_viz_ctx.label_names = {}
+
+def _set_viz_context(view_axis=-1, rot90_k=0, label_names=None):
+    _viz_ctx.view_axis = view_axis
+    _viz_ctx.rot90_k = rot90_k
+    _viz_ctx.label_names = label_names or {}
 
 try:
     from torch.utils.data import Dataset, Subset
@@ -31,6 +44,8 @@ class _MedSegMNISTBase(Dataset):
     modality: str = None
     dimensionality: str = None
     n_channels: int = 1
+    view_axis: int = -1  # 3D viz: -1=last, 0=axial, 1=coronal; override per dataset
+    rot90_k: int = 0      # 90° rotations to apply to 2D slices for display
 
     def __init__(
         self,
@@ -73,7 +88,7 @@ class _MedSegMNISTBase(Dataset):
         self._all_images = loader["train_images"]
         self._all_masks = loader["train_masks"]
 
-        json_path = os.path.join(root, f"{self.flag}.json")
+        json_path = os.path.join(self._organ_root(), f"{self.flag}.json")
         if os.path.isfile(json_path):
             with open(json_path) as f:
                 self.meta = json.load(f)
@@ -91,13 +106,19 @@ class _MedSegMNISTBase(Dataset):
                 f"Available sizes: {self.available_sizes}"
             )
 
+    organ: str = None
+
+    def _organ_root(self):
+        organ_dir = getattr(self, "organ", None)
+        return os.path.join(self.root, organ_dir) if organ_dir else self.root
+
     def _resolve_npz_path(self):
         filename = (
             f"{self.flag}_native.npz"
             if self.size == "native"
             else f"{self.flag}_{self.size}.npz"
         )
-        return os.path.join(self.root, filename)
+        return os.path.join(self._organ_root(), filename)
 
     def _resolve_indices(self):
         folds = self.meta.get("cv_folds", {})
@@ -133,6 +154,9 @@ class _MedSegMNISTBase(Dataset):
 
     def get_label_names(self):
         return self.meta.get("label_names", {})
+
+    def set_label_names(self, label_names):
+        self.meta["label_names"] = label_names
 
     def info(self):
         import pprint
@@ -182,11 +206,7 @@ class MedSegMNIST3D(_MedSegMNISTBase):
         if self.target_transform:
             mask = self.target_transform(mask)
 
-        if self.transform:
-            image = self.transform(image)
-        if self.target_transform:
-            mask = self.target_transform(mask)
-
+        _set_viz_context(self.view_axis, self.rot90_k, self.get_label_names())
         return image, mask
 
     def get_data(self):
@@ -225,6 +245,7 @@ class MedSegMNIST2D(_MedSegMNISTBase):
         if self.target_transform:
             mask = self.target_transform(mask)
 
+        _set_viz_context(self.view_axis, self.rot90_k, self.get_label_names())
         return image, mask
 
     def get_data(self):

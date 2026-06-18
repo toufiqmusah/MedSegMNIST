@@ -34,17 +34,22 @@ def test_list_datasets():
     from medsegmnist.registry import list_datasets
 
     all_ds = list_datasets()
-    assert len(all_ds) == 3
+    assert len(all_ds) == 10
 
-    brain = list_datasets(dimensionality="3D")
-    assert len(brain) == 1
-    assert brain[0][0] == "brain3d"
+    threed = list_datasets(dimensionality="3D")
+    assert len(threed) == 4
+    flags_3d = [e[0] for e in threed]
+    assert "abdomen3d" in flags_3d
+    assert "brain3d" in flags_3d
+    assert "spine3d" in flags_3d
+    assert "knee3d" in flags_3d
 
     twod = list_datasets(dimensionality="2D")
-    assert len(twod) == 2
+    assert len(twod) == 6
     flags = [e[0] for e in twod]
     assert "lung2d" in flags
     assert "nuclei2d" in flags
+    assert "polyp2d" in flags
 
 
 def test_info():
