@@ -6,6 +6,7 @@ from .xray.lung import LungSegMNIST2D
 from .pathology.nuclei import NucleiSegMNIST2D
 from .endoscopy.polyp import PolypSegMNIST2D
 from .dermoscopy.derm import SkinSegMNIST2D
+from .ultrasound.breast import BreastSegMNIST2D
 
 __all__ = [
     "AbdomenSegMNIST3D",
@@ -16,4 +17,5 @@ __all__ = [
     "NucleiSegMNIST2D",
     "PolypSegMNIST2D",
     "SkinSegMNIST2D",
+    "BreastSegMNIST2D",
 ]

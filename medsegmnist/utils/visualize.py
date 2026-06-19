@@ -10,6 +10,21 @@ _SEG_CMAP = mcolors.ListedColormap(
 )
 
 
+def _stretch_rgb(img):
+    if img.ndim != 3 or img.shape[-1] != 3:
+        return img
+    lo, hi = np.percentile(img, [1, 99])
+    if hi <= lo:
+        return img
+    s = np.clip((img - lo) / (hi - lo), 0, 1).astype(img.dtype)
+    return s
+
+
+def _cmap_for(n_labels):
+    n = max(2, min(n_labels, _SEG_CMAP.N))
+    return mcolors.ListedColormap(_SEG_CMAP.colors[:n])
+
+
 def _ensure_2d(image, mask, slice_idx=None, slice_axis=None, rot90_k=0):
     if slice_axis is None:
         slice_axis = getattr(_viz_ctx, 'view_axis', -1)
@@ -72,14 +87,15 @@ def plot_sample(image, mask, slice_idx=None, slice_axis=None, rot90_k=0, ax=None
     img_slice, msk_slice = _ensure_2d(image, mask, slice_idx, slice_axis, rot90_k)
 
     is_rgb = img_slice.ndim == 3 and img_slice.shape[-1] == 3
+    if is_rgb:
+        img_slice = _stretch_rgb(img_slice)
     cmap = None if is_rgb else "gray"
     ax[0].imshow(img_slice, cmap=cmap, aspect="auto")
     ax[0].set_title("Image")
     ax[0].axis("off")
 
     n_labels = int(msk_slice.max()) + 1
-    vmax = max(n_labels - 1, _SEG_CMAP.N - 1)
-    ax[1].imshow(msk_slice, cmap=_SEG_CMAP, vmin=0, vmax=vmax, aspect="auto")
+    ax[1].imshow(msk_slice, cmap=_cmap_for(n_labels), vmin=0, vmax=n_labels - 1, aspect="auto")
     ax[1].set_title("Mask")
     ax[1].axis("off")
 
@@ -99,12 +115,14 @@ def plot_overlay(image, mask, alpha=0.5, slice_idx=None, slice_axis=None, rot90_
     img_slice, msk_slice = _ensure_2d(image, mask, slice_idx, slice_axis, rot90_k)
 
     is_rgb = img_slice.ndim == 3 and img_slice.shape[-1] == 3
-    ax.imshow(img_slice, cmap=None if is_rgb else "gray", aspect="auto")
+    if is_rgb:
+        img_slice = _stretch_rgb(img_slice)
+    cmap = None if is_rgb else "gray"
+    ax.imshow(img_slice, cmap=cmap, aspect="auto")
     msk_masked = np.ma.masked_where(msk_slice == 0, msk_slice)
     n_labels = int(msk_slice.max()) + 1
-    vmax = max(n_labels - 1, _SEG_CMAP.N - 1)
-    ax.imshow(msk_masked, cmap=_SEG_CMAP, alpha=alpha,
-              vmin=0, vmax=vmax, aspect="auto")
+    ax.imshow(msk_masked, cmap=_cmap_for(n_labels), alpha=alpha,
+              vmin=0, vmax=n_labels - 1, aspect="auto")
     ax.set_title("Overlay")
     ax.axis("off")
 
@@ -128,9 +146,6 @@ def plot_grid(dataset=None, images=None, masks=None, indices=None, n_samples=9, 
             rng = np.random.default_rng(seed)
             idxs = rng.integers(0, n_total, size=min(n_samples, n_total)).tolist()
         images, masks = zip(*[dataset[i] for i in idxs]) if idxs else ([], [])
-    else:
-        if images is None or masks is None:
-            raise ValueError("Must provide either `dataset` or both `images` and `masks`.")
 
     n = len(images)
     if n_cols is None:
@@ -146,7 +161,8 @@ def plot_grid(dataset=None, images=None, masks=None, indices=None, n_samples=9, 
         axes = axes.reshape(1, -1)
 
     n_labels = max(int(msk.max()) + 1 for msk in masks) if masks else 0
-    vmax = max(n_labels - 1, _SEG_CMAP.N - 1) if n_labels else 0
+    cmap = _cmap_for(n_labels) if n_labels else _SEG_CMAP
+    vmax = n_labels - 1 if n_labels else 0
 
     fig.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)
 
@@ -155,8 +171,11 @@ def plot_grid(dataset=None, images=None, masks=None, indices=None, n_samples=9, 
         col = (i % n_cols) * 2
         img_slice, msk_slice = _ensure_2d(images[i], masks[i], slice_idx, slice_axis, rot90_k)
         is_rgb = img_slice.ndim == 3 and img_slice.shape[-1] == 3
-        axes[row, col].imshow(img_slice, cmap=None if is_rgb else "gray", aspect="auto")
-        axes[row, col + 1].imshow(msk_slice, cmap=_SEG_CMAP, vmin=0, vmax=vmax, aspect="auto")
+        if is_rgb:
+            img_slice = _stretch_rgb(img_slice)
+        im_cmap = None if is_rgb else "gray"
+        axes[row, col].imshow(img_slice, cmap=im_cmap, aspect="auto")
+        axes[row, col + 1].imshow(msk_slice, cmap=cmap, vmin=0, vmax=vmax, aspect="auto")
         for a in axes[row, col:col + 2]:
             a.axis("off")
 

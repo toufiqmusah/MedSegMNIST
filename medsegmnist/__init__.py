@@ -19,7 +19,7 @@ from .datasets.mri.knee import KneeSegMNIST3D
 from .datasets.xray.lung import LungSegMNIST2D
 from .datasets.pathology.nuclei import NucleiSegMNIST2D
 from .datasets.endoscopy.polyp import PolypSegMNIST2D
-from .datasets.ultrasound.breast import BreastSegMNIST
+from .datasets.ultrasound.breast import BreastSegMNIST2D
 from .datasets.fundus.fives import FundusSegMNIST2D
 from .datasets.dermoscopy.derm import SkinSegMNIST2D
 
@@ -36,7 +36,7 @@ __all__ = [
     "LungSegMNIST2D",
     "NucleiSegMNIST2D",
     "PolypSegMNIST2D",
-    "BreastSegMNIST",
+    "BreastSegMNIST2D",
     "FundusSegMNIST2D",
     "SkinSegMNIST2D",
     "info",
