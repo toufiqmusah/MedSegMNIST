@@ -43,18 +43,17 @@ Data hosted on Zenodo: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20694
 ## Installation
 
 ```bash
-# Core package (dataset loading + CLI)
 pip install git+https://github.com/toufiqmusah/MedSegMNIST.git
-
-# With PyTorch training support
-pip install "medsegmnist[torch]"
-
-# For preprocessing scripts (building NPZs from raw sources)
-pip install "medsegmnist[preprocess]"
-
-# Development (testing, linting)
-pip install "medsegmnist[dev]"
 ```
+
+Extra dependencies (optional):
+
+| Extra | Includes | Install |
+|-------|----------|---------|
+| `[torch]` | PyTorch, Lightning, TorchMetrics — needed for training | `pip install "medsegmnist[torch] @ git+https://github.com/toufiqmusah/MedSegMNIST.git"` |
+| `[preprocess]` | TorchIO, NiBabel, Pillow — for building NPZs from raw sources | `pip install "medsegmnist[preprocess] @ git+https://github.com/toufiqmusah/MedSegMNIST.git"` |
+| `[dev]` | Pytest, Ruff, Sphinx — for development | `pip install "medsegmnist[dev] @ git+https://github.com/toufiqmusah/MedSegMNIST.git"` |
+| `[all]` | Everything above | `pip install "medsegmnist[all] @ git+https://github.com/toufiqmusah/MedSegMNIST.git"` |
 
 ---
 
