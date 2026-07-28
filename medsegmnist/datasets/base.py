@@ -234,9 +234,16 @@ class _MedSegMNISTBase(Dataset):
         except Exception as e:
             raise RuntimeError(f"Failed to fetch Zenodo record {record_id}: {e}")
 
-        dataset_files = [
-            f for f in record["files"] if f["key"].startswith(self.flag)
-        ]
+        _all_flag_files = [f for f in record["files"] if f["key"].startswith(self.flag)]
+        if download_all:
+            dataset_files = _all_flag_files
+        else:
+            size_str = str(self.size)
+            dataset_files = [
+                f for f in _all_flag_files
+                if f["key"] == f"{self.flag}.json"
+                or f["key"].endswith(f"_{size_str}.npz")
+            ]
         if not dataset_files:
             print(f"  No files found for flag '{self.flag}' on Zenodo.")
             return
