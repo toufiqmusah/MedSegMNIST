@@ -11,6 +11,7 @@ class BrainSegMNIST3D(MedSegMNIST3D):
     n_classes = 4
     modality = "MRI"
     n_channels = 1
+    rot90_k = 1
 
     citation = (
         'Adewole, Maruf, et al. "The BraTS-Africa dataset: expanding the brain tumor '
@@ -18,6 +19,6 @@ class BrainSegMNIST3D(MedSegMNIST3D):
         "Radiology: Artificial Intelligence 7.4 (2025): e240528."
     )
 
-    zenodo_record_id = None
+    zenodo_record_id = "20694762"
     zenodo_file_ids = {}
     hf_repo_id = None

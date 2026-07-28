@@ -6,7 +6,7 @@ setup(
     description="Standardised biomedical image segmentation datasets for PyTorch",
     long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/MedSegMNIST/MedSegMNIST",
+    url="https://github.com/toufiqmusah/MedSegMNIST",
     license="Apache 2.0",
     packages=find_packages(exclude=["examples", "scripts"]),
     python_requires=">=3.10",

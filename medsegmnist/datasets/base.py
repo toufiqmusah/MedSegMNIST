@@ -21,7 +21,9 @@ except ImportError:
     Dataset = object
     Subset = None
 
-DEFAULT_ROOT = os.path.join(os.path.expanduser("~"), ".medsegmnist")
+DEFAULT_ROOT = os.path.normpath(
+    os.path.join(os.path.expanduser("~"), ".medsegmnist", "data")
+)
 _citations_shown = set()
 
 
@@ -47,6 +49,30 @@ class _MedSegMNISTBase(Dataset):
     view_axis: int = -1  # 3D viz: -1=last, 0=axial, 1=coronal; override per dataset
     rot90_k: int = 0      # 90° rotations to apply to 2D slices for display
 
+    SIZE_ALIASES = {"low": None, "mid": None, "high": None, "native": "native"}
+
+    @classmethod
+    def _resolve_size_alias(cls, size):
+        if size in cls.SIZE_ALIASES:
+            alias_map = cls._build_size_aliases()
+            if size in alias_map:
+                return alias_map[size]
+            return size
+        return size
+
+    @classmethod
+    def _build_size_aliases(cls):
+        int_sizes = sorted([s for s in cls.available_sizes if isinstance(s, int)])
+        if not int_sizes:
+            return {"low": None, "mid": None, "high": None, "native": "native"}
+        mid = min(int_sizes, key=lambda x: abs(x - 256))
+        return {
+            "low": int_sizes[0],
+            "mid": mid,
+            "high": int_sizes[-1],
+            "native": "native",
+        }
+
     def __init__(
         self,
         split="all",
@@ -65,12 +91,12 @@ class _MedSegMNISTBase(Dataset):
         self._split = split
         self.transform = transform
         self.target_transform = target_transform
-        self.root = root
+        self.root = root if root is not None else DEFAULT_ROOT
         self.mmap_mode = mmap_mode
 
         if size is None:
             size = self.available_sizes[0]
-        self.size = size
+        self.size = self._resolve_size_alias(size)
         self._validate_size()
 
         npz_path = self._resolve_npz_path()
@@ -100,10 +126,12 @@ class _MedSegMNISTBase(Dataset):
         _show_citation(type(self))
 
     def _validate_size(self):
-        if self.size not in self.available_sizes:
+        valid = self.available_sizes + list(self.SIZE_ALIASES)
+        if self.size not in valid:
             raise ValueError(
                 f"Invalid size {self.size!r} for {self.class_name}. "
-                f"Available sizes: {self.available_sizes}"
+                f"Available sizes: {self.available_sizes}, "
+                f"aliases: {list(self.SIZE_ALIASES)}"
             )
 
     organ: str = None
@@ -180,8 +208,75 @@ class _MedSegMNISTBase(Dataset):
             f"n={len(self)})"
         )
 
-    def download(self):
-        raise NotImplementedError("download() not yet implemented")
+    def download(self, download_all=False):
+        import hashlib
+        import json as _json
+        import os as _os
+        import urllib.request
+        import urllib.parse
+        import sys
+
+        record_id = getattr(self, "zenodo_record_id", None)
+        if not record_id:
+            raise NotImplementedError(
+                f"download() not available for {self.class_name}. "
+                "No Zenodo record ID configured."
+            )
+
+        organ_dir = self._organ_root()
+        _os.makedirs(organ_dir, exist_ok=True)
+
+        api_url = f"https://zenodo.org/api/records/{record_id}"
+        print(f"[MedSegMNIST] Fetching file manifest for {self.class_name}...")
+        try:
+            with urllib.request.urlopen(api_url, timeout=30) as resp:
+                record = _json.loads(resp.read().decode())
+        except Exception as e:
+            raise RuntimeError(f"Failed to fetch Zenodo record {record_id}: {e}")
+
+        dataset_files = [
+            f for f in record["files"] if f["key"].startswith(self.flag)
+        ]
+        if not dataset_files:
+            print(f"  No files found for flag '{self.flag}' on Zenodo.")
+            return
+
+        for file_info in dataset_files:
+            filename = file_info["key"]
+            expected_md5 = file_info["checksum"].replace("md5:", "")
+            dest_path = _os.path.join(organ_dir, filename)
+
+            if _os.path.isfile(dest_path):
+                if self._check_md5(dest_path, expected_md5):
+                    print(f"  {filename} OK, skipping.")
+                    continue
+                print(f"  {filename} checksum mismatch, re-downloading.")
+
+            file_url = file_info["links"]["self"]
+            print(f"  Downloading {filename}...", end=" ", flush=True)
+            try:
+                urllib.request.urlretrieve(file_url, dest_path)
+            except Exception as e:
+                print(f"FAILED: {e}")
+                if _os.path.isfile(dest_path):
+                    _os.remove(dest_path)
+                raise
+
+            if not self._check_md5(dest_path, expected_md5):
+                _os.remove(dest_path)
+                raise RuntimeError(
+                    f"MD5 mismatch for {filename} after download."
+                )
+            print("done.")
+
+    @staticmethod
+    def _check_md5(filepath, expected_md5):
+        import hashlib
+        md5 = hashlib.md5()
+        with open(filepath, "rb") as f:
+            for chunk in iter(lambda: f.read(65536), b""):
+                md5.update(chunk)
+        return md5.hexdigest() == expected_md5
 
     def download_native(self):
         raise NotImplementedError("download_native() not yet implemented")

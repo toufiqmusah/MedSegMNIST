@@ -8,6 +8,8 @@ Usage::
 
 import argparse
 
+from medsegmnist.datasets.base import DEFAULT_ROOT
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -37,7 +39,7 @@ def main():
     train_parser.add_argument(
         "--root",
         type=str,
-        default="/teamspace/studios/this_studio/datasets",
+        default=DEFAULT_ROOT,
         help="Dataset root directory",
     )
     train_parser.add_argument("--epochs", type=int, default=50, help="Training epochs")
@@ -92,7 +94,7 @@ def main():
     eval_parser.add_argument(
         "--root",
         type=str,
-        default="/teamspace/studios/this_studio/datasets",
+        default=DEFAULT_ROOT,
         help="Dataset root directory",
     )
     eval_parser.add_argument("--batch-size", type=int, default=8, help="Batch size")

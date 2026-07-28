@@ -7,6 +7,7 @@ from .pathology.nuclei import NucleiSegMNIST2D
 from .endoscopy.polyp import PolypSegMNIST2D
 from .dermoscopy.derm import SkinSegMNIST2D
 from .ultrasound.breast import BreastSegMNIST2D
+from .fundus.fives import FundusSegMNIST2D
 
 __all__ = [
     "AbdomenSegMNIST3D",
@@ -18,4 +19,5 @@ __all__ = [
     "PolypSegMNIST2D",
     "SkinSegMNIST2D",
     "BreastSegMNIST2D",
+    "FundusSegMNIST2D",
 ]

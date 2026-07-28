@@ -18,6 +18,6 @@ class LungSegMNIST2D(MedSegMNIST2D):
         "Mendeley Data, V2, doi: 10.17632/8gf9vpkhgy.2"
     )
 
-    zenodo_record_id = None
+    zenodo_record_id = "20694762"
     zenodo_file_ids = {}
     hf_repo_id = None

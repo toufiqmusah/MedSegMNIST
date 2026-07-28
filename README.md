@@ -1,20 +1,23 @@
 # MedSegMNIST
 
-[![CI](https://github.com/MedSegMNIST/MedSegMNIST/actions/workflows/ci.yml/badge.svg)](https://github.com/MedSegMNIST/MedSegMNIST/actions/workflows/ci.yml)
+[![CI](https://github.com/toufiqmusah/MedSegMNIST/actions/workflows/ci.yml/badge.svg)](https://github.com/toufiqmusah/MedSegMNIST/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
-[![License](https://img.shields.io/badge/license-CC%20BY%204.0-green)]()
+[![License](https://img.shields.io/badge/license-Apache%202.0-green)]()
 
-A collection of **standardised biomedical image segmentation datasets** in NPZ format, with a unified PyTorch API, pre-configured U-Net models, and a Lightning-based training pipeline.
+A collection of **10 standardised biomedical image segmentation datasets** across 8 modalities, with a unified PyTorch API, pre-configured U-Net models, and a Lightning-based training pipeline.
 
 > Inspired by [MedMNIST](https://medmnist.com/) — but for **segmentation** instead of classification.
+
+Data hosted on Zenodo: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20694762.svg)](https://doi.org/10.5281/zenodo.20694762)
 
 ---
 
 ## Features
 
 - **Unified API**: Load any dataset in 3 lines — same interface for 2D and 3D
-- **Multiple sizes**: Each dataset is available in several resolutions (64–512 px, + native)
-- **Built-in CV folds**: 5-fold cross-validation splits included out of the box
+- **Multiple resolutions**: Each dataset at 2–4 standardised sizes, plus native
+- **Built-in 5-fold CV**: Cross-validation splits included out of the box
+- **Auto-download**: Data fetches from Zenodo with MD5 verification (`download=True`)
 - **Ready-to-train**: U-Net (2D/3D) + PyTorch Lightning trainer + Dice/IoU metrics
 - **Extensible**: Register new datasets with a single decorator
 
@@ -22,35 +25,34 @@ A collection of **standardised biomedical image segmentation datasets** in NPZ f
 
 ## Supported Datasets
 
-| Flag | Dataset | Modality | Anatomy | Dim | Classes | Train | Test | Sizes |
-|------|---------|----------|---------|-----|---------|-------|------|-------|
-| `brain3d` | BrainSegMNIST3D | MRI | Brain (gliomas) | 3D | 4 | 116 | 30 | 96, 128, 224, native |
-| `lung2d` | LungSegMNIST2D | X-ray | Chest / Lungs | 2D | 2 | 5,448 | 1,362 | 128, 256, 512 |
-| `nuclei2d` | NucleiSegMNIST2D | Pathology | Multi-organ (nuclei) | 2D | 2 | 112 | 39 | 256, 512, native |
-
-**BrainSegMNIST3D** — Brain tumour sub-region segmentation from BraTS-Africa (T2-FLAIR). Labels: background (0), necrotic core (1), oedema (2), enhancing tumour (3). Native resolution: 240×240×155 at 1.0 mm isotropic.
-
-**LungSegMNIST2D** — Lung field segmentation from chest X-rays (Darwin + Montgomery + Shenzhen). Binary: background (0), lung (1). Native resolution: 512×512, converted from RGB to grayscale.
-
-**NucleiSegMNIST2D** — Nuclei segmentation from NuSeC + MoNuSeg 2018. RGB input (3 channels). Binary: background (0), nuclei (1). Native resolution: 1024×1024 (MoNuSeg centre-padded to match).
+| Flag | Class | Modality | Dim | Classes | Channels | Sizes |
+|------|-------|----------|-----|---------|----------|-------|
+| `abdomen3d` | AbdomenSegMNIST3D | CT | 3D | 6 | 1 | 64, 96, 128, 192, native |
+| `brain3d` | BrainSegMNIST3D | MRI | 3D | 4 | 1 | 96, 128, 224, native |
+| `spine3d` | SpineSegMNIST3D | MR | 3D | 3 | 1 | 64, 96, 128, 192, native |
+| `knee3d` | KneeSegMNIST3D | MR | 3D | 6 | 1 | 64, 96, 128, 192, native |
+| `lung2d` | LungSegMNIST2D | X-ray | 2D | 2 | 1 | 128, 256, 512 |
+| `nuclei2d` | NucleiSegMNIST2D | Pathology | 2D | 2 | 3 | 256, 512, native |
+| `polyp2d` | PolypSegMNIST2D | Endoscopy | 2D | 2 | 3 | 128, 256, 512, native |
+| `breast2d` | BreastSegMNIST2D | Mammography | 2D | 2 | 1 | 128, 256, 512, native |
+| `fives2d` | FundusSegMNIST2D | Fundus photography | 2D | 2 | 3 | 256, 512, 1024, native |
+| `derm2d` | SkinSegMNIST2D | Dermoscopy | 2D | 2 | 3 | 128, 256, 512, native |
 
 ---
 
 ## Installation
 
 ```bash
-pip install medsegmnist
-```
+# Core package (dataset loading + CLI)
+pip install git+https://github.com/toufiqmusah/MedSegMNIST.git
 
-To also run preprocessing scripts (for building datasets from raw sources):
+# With PyTorch training support
+pip install "medsegmnist[torch]"
 
-```bash
+# For preprocessing scripts (building NPZs from raw sources)
 pip install "medsegmnist[preprocess]"
-```
 
-For development (testing, linting):
-
-```bash
+# Development (testing, linting)
 pip install "medsegmnist[dev]"
 ```
 
@@ -64,8 +66,8 @@ from medsegmnist import LungSegMNIST2D, list_datasets
 # List all available datasets
 print(list_datasets())
 
-# Load a dataset
-ds = LungSegMNIST2D(split="train", size=128, root="/path/to/datasets")
+# Load a dataset (auto-downloads from Zenodo on first use)
+ds = LungSegMNIST2D(split="train", size=128, download=True)
 print(len(ds))  # 5448
 
 # Access a sample
@@ -74,10 +76,12 @@ print(image.shape)  # (1, 128, 128) — channel-first float32
 print(mask.shape)   # (128, 128) — uint8
 print(mask.unique())  # [0, 1]
 
-# Get metadata for any dataset
+# Get metadata
 from medsegmnist import info
 info("brain3d")
 ```
+
+Data is stored in `~/.medsegmnist/data/` by default. Override with `root="/your/path"`.
 
 ### Data shape convention
 
@@ -91,24 +95,23 @@ info("brain3d")
 
 ## Training
 
+Requires `pip install "medsegmnist[torch]"`.
+
 ```python
 from medsegmnist import LungSegMNIST2D
 from medsegmnist.training import MedSegModule
 import lightning as L
 from torch.utils.data import DataLoader
 
-# Dataset
-ds = LungSegMNIST2D(split="train", size=128, root="/path/to/datasets")
+ds = LungSegMNIST2D(split="train", size=128, download=True)
 train_subset, val_subset = ds.get_fold(0)
 
 train_loader = DataLoader(train_subset, batch_size=16, shuffle=True)
 val_loader = DataLoader(val_subset, batch_size=16)
 
-# Your model — any PyTorch segmentation model works
-model = ...  # e.g. UNet2D(in_channels=1, n_classes=2)
+model = ...  # any segmentation model, e.g. UNet2D(in_channels=1, n_classes=2)
 module = MedSegModule(model=model, num_classes=2)
 
-# Train
 trainer = L.Trainer(max_epochs=50, accelerator="auto")
 trainer.fit(module, train_loader, val_loader)
 ```
@@ -116,12 +119,12 @@ trainer.fit(module, train_loader, val_loader)
 Or use the CLI:
 
 ```bash
-medsegmnist train --model "mymodel.MyModel" --flag lung2d --size 128 --epochs 50
+medsegmnist train --model "examples.unet.UNet2D" --flag lung2d --size 128 --epochs 50
 ```
 
-A reference ``UNet2D``/``UNet3D`` implementation is provided in ``examples/`` for convenience.
+Reference U-Net implementations are in `examples/unet.py` (2D) and `examples/unet3d.py` (3D).
 
-### Training options
+### CLI options
 
 | Argument | Default | Description |
 |----------|---------|-------------|
@@ -129,11 +132,13 @@ A reference ``UNet2D``/``UNet3D`` implementation is provided in ``examples/`` fo
 | `--model-kwargs` | `{}` | JSON kwargs for model constructor |
 | `--flag` | `lung2d` | Dataset flag |
 | `--size` | first available | Image size |
+| `--root` | `~/.medsegmnist/data` | Dataset root directory |
 | `--epochs` | 50 | Number of epochs |
 | `--batch-size` | 8 | Batch size |
 | `--lr` | 1e-3 | Learning rate |
+| `--weight-decay` | 1e-4 | Weight decay |
 | `--fold` | 0 | Cross-validation fold (0–4) |
-| `--accelerator` | auto | `auto`, `cpu`, or `gpu` |
+| `--accelerator` | `auto` | `auto`, `cpu`, or `gpu` |
 | `--fast-dev-run` | — | Run one batch for smoke-testing |
 
 ---
@@ -161,7 +166,7 @@ Macro average   0.9820    0.9649
 ```python
 from medsegmnist.utils import plot_sample, plot_grid
 
-ds = LungSegMNIST2D(split="test", size=128, root="/path/to/datasets")
+ds = LungSegMNIST2D(split="test", size=128)
 img, mask = ds[0]
 
 fig, ax = plt.subplots(1, 2)
@@ -177,49 +182,43 @@ plt.show()
 
 | Class | Flag | Base class | Channels | Classes | Sizes |
 |-------|------|------------|----------|---------|-------|
+| `AbdomenSegMNIST3D` | `abdomen3d` | `MedSegMNIST3D` | 1 | 6 | 64, 96, 128, 192, native |
 | `BrainSegMNIST3D` | `brain3d` | `MedSegMNIST3D` | 1 | 4 | 96, 128, 224, native |
+| `SpineSegMNIST3D` | `spine3d` | `MedSegMNIST3D` | 1 | 3 | 64, 96, 128, 192, native |
+| `KneeSegMNIST3D` | `knee3d` | `MedSegMNIST3D` | 1 | 6 | 64, 96, 128, 192, native |
 | `LungSegMNIST2D` | `lung2d` | `MedSegMNIST2D` | 1 | 2 | 128, 256, 512 |
 | `NucleiSegMNIST2D` | `nuclei2d` | `MedSegMNIST2D` | 3 | 2 | 256, 512, native |
+| `PolypSegMNIST2D` | `polyp2d` | `MedSegMNIST2D` | 3 | 2 | 128, 256, 512, native |
+| `BreastSegMNIST2D` | `breast2d` | `MedSegMNIST2D` | 1 | 2 | 128, 256, 512, native |
+| `FundusSegMNIST2D` | `fives2d` | `MedSegMNIST2D` | 3 | 2 | 256, 512, 1024, native |
+| `SkinSegMNIST2D` | `derm2d` | `MedSegMNIST2D` | 3 | 2 | 128, 256, 512, native |
 
-All dataset classes share the same interface (inherited from `MedSegMNIST2D` or `MedSegMNIST3D`):
+All dataset classes share the same interface:
 
 | Method | Description |
 |--------|-------------|
-| `__init__(split, size, root, transform, target_transform, mmap_mode, download)` | Load a dataset. `split` must be `"train"` or `"test"`. |
+| `__init__(split, size, root, transform, target_transform, mmap_mode, download)` | Load a dataset. `split`: `"train"`, `"test"`, or `"all"`. |
 | `__len__()` | Number of samples |
 | `__getitem__(index)` | `(image_tensor, mask_tensor)` |
 | `get_data()` | Raw numpy arrays `(images, masks)` |
 | `get_fold(k)` | `(train_subset, val_subset)` for fold `k` (0–4) |
 | `get_label_names()` | `dict` mapping class IDs to name strings |
 | `info()` | Print dataset metadata |
+| `get_voxel_spacing()` | Voxel spacing in mm (3D datasets only) |
 
 ### Registry
 
 ```python
 from medsegmnist import info, list_datasets
 
-# List all datasets
 print(list_datasets())
-# → [("brain3d", "BrainSegMNIST3D", "MRI"), ...]
+# → [("abdomen3d", "AbdomenSegMNIST3D", "CT"), ("brain3d", "BrainSegMNIST3D", "MRI"), ...]
 
-# Filter by dimensionality
 print(list_datasets(dimensionality="2D"))
-# → [("lung2d", "LungSegMNIST2D", "X-ray"), ("nuclei2d", "NucleiSegMNIST2D", "Pathology")]
+# → [("lung2d", "LungSegMNIST2D", "X-ray"), ("nuclei2d", "NucleiSegMNIST2D", "Pathology"), ...]
 
-# Get metadata
 info("brain3d")
 ```
-
-### Reference model implementations
-
-Reference implementations are provided in ``examples/`` for convenience:
-
-| File | Model | Description |
-|------|-------|-------------|
-| `examples/unet.py` | `UNet2D(in_channels, n_classes, base_filters, depth, bilinear)` | Standard 2D U-Net |
-| `examples/unet3d.py` | `UNet3D(in_channels, n_classes, base_filters, depth, trilinear)` | 3D U-Net counterpart |
-
-These are **not** part of the ``medsegmnist`` package — copy or adapt them as needed.
 
 ### Training (`medsegmnist.training`)
 
@@ -229,7 +228,7 @@ These are **not** part of the ``medsegmnist`` package — copy or adapt them as 
 | `IoUScore(num_classes, average="macro")` | IoU / Jaccard index metric |
 | `DiceLoss(smooth=1e-6)` | Differentiable Dice loss |
 | `DiceCELoss(smooth=1e-6, dice_weight=0.5, ce_weight=0.5)` | Combined Dice + Cross-Entropy |
-| `MedSegModule(model, num_classes, learning_rate, loss_fn, weight_decay)` | LightningModule with training/val steps, AdamW, cosine annealing |
+| `MedSegModule(model, num_classes, learning_rate, loss_fn, weight_decay)` | LightningModule with AdamW + cosine annealing |
 
 ### Visualization (`medsegmnist.utils`)
 
@@ -243,11 +242,6 @@ These are **not** part of the ``medsegmnist`` package — copy or adapt them as 
 
 ## Adding a New Dataset
 
-1. Create a dataset class inheriting from `MedSegMNIST2D` or `MedSegMNIST3D`
-2. Decorate with `@register`
-3. Add preprocessing to `scripts/preprocess/`
-4. Generate NPZ files and JSON metadata using the preprocessing script
-
 ```python
 from medsegmnist.datasets.base import MedSegMNIST2D
 from medsegmnist.registry import register
@@ -256,23 +250,42 @@ from medsegmnist.registry import register
 class MyDataset(MedSegMNIST2D):
     flag = "my2d"
     class_name = "MyDataset"
+    organ = "my_organ"
     available_sizes = [128, 256]
     n_classes = 3
     modality = "CT"
     n_channels = 1
+    citation = "Author et al. (2026)"
+    zenodo_record_id = "1234567"
 ```
 
-The rest — data loading, folds, ``info()``, ``list_datasets()`` — works automatically.
+1. Create the dataset class with `@register`, extending `MedSegMNIST2D` or `MedSegMNIST3D`
+2. Add import to `medsegmnist/datasets/__init__.py` and `medsegmnist/__init__.py`
+3. Generate NPZ files and JSON metadata (see `scripts/preprocess/` for reference)
+4. Upload data and update `zenodo_record_id`
+
+The rest — data loading, CV folds, `info()`, `list_datasets()` — works automatically.
 
 ---
+
+## Package Structure
+
+```
 medsegmnist/
-├── __init__.py              # Public API (dataset classes, info, list_datasets)
-├── registry.py              # Dataset registry (@register, info, list_datasets)
+├── __init__.py              # Public API (all 10 dataset classes, info, list_datasets)
+├── registry.py              # @register decorator + registry queries
 ├── datasets/
 │   ├── base.py              # MedSegMNIST2D / MedSegMNIST3D base classes
+│   ├── ct/abdomen.py        # AbdomenSegMNIST3D
 │   ├── mri/brain.py         # BrainSegMNIST3D
+│   ├── mri/spine.py         # SpineSegMNIST3D
+│   ├── mri/knee.py          # KneeSegMNIST3D
 │   ├── xray/lung.py         # LungSegMNIST2D
-│   └── pathology/nuclei.py  # NucleiSegMNIST2D
+│   ├── pathology/nuclei.py  # NucleiSegMNIST2D
+│   ├── endoscopy/polyp.py   # PolypSegMNIST2D
+│   ├── ultrasound/breast.py # BreastSegMNIST2D
+│   ├── fundus/fives.py      # FundusSegMNIST2D
+│   └── dermoscopy/derm.py   # SkinSegMNIST2D
 ├── cli/
 │   ├── __init__.py          # medsegmnist CLI entry point
 │   ├── train.py             # train subcommand
@@ -284,16 +297,10 @@ medsegmnist/
 └── utils/
     └── visualize.py         # Plotting utilities
 scripts/preprocess/          # Preprocessing scripts (build NPZ from raw data)
-├── common.py
-├── brain.py
-├── lung.py
-└── nuclei.py
 examples/                    # Reference model implementations
-├── unet.py
-└── unet3d.py
-docs/                        # Sphinx documentation
-├── source/
-└── Makefile
+├── unet.py                  # UNet2D
+└── unet3d.py                # UNet3D
+tests/                       # pytest suite
 ```
 
 ---
@@ -305,16 +312,26 @@ If you use MedSegMNIST in your research, please cite:
 ```bibtex
 @software{medsegmnist,
   title = {MedSegMNIST: Standardised Biomedical Image Segmentation Datasets},
-  url = {https://github.com/MedSegMNIST/MedSegMNIST},
+  url = {https://github.com/toufiqmusah/MedSegMNIST},
+  doi = {10.5281/zenodo.20694762},
   year = {2026}
 }
 ```
 
 Please also cite the original source papers of the constituent datasets:
 
-- **BrainSegMNIST3D**: Adewole, Maruf, et al. "The BraTS-Africa dataset: expanding the brain tumor segmentation data to capture African populations." *Radiology: Artificial Intelligence* 7.4 (2025): e240528.
-- **LungSegMNIST2D**: Danilov, Viacheslav; Proutski, Alex; Kirpich, Alexander; Litmanovich, Diana; Gankin, Yuriy (2022), "Chest X-ray dataset for lung segmentation", *Mendeley Data*, V2, doi: 10.17632/8gf9vpkhgy.2
-- **NucleiSegMNIST2D**: (1) Kumar, Neeraj, et al. "A dataset and a technique for generalized nuclear segmentation for computational pathology." *IEEE Transactions on Medical Imaging* 36.7 (2017): 1550–1560. (2) Samet, Refik, et al. "NuSeC: A Dataset for Nuclei Segmentation in Breast Cancer Histopathology Images." *arXiv preprint* arXiv:2507.14272 (2025).
+| Dataset | Citation |
+|---------|----------|
+| AbdomenSegMNIST3D | Rister, Blaine, et al. "CT-ORG, a new dataset for multiple organ segmentation in computed tomography." *Scientific Data* 7.1 (2020): 381. |
+| BrainSegMNIST3D | Adewole, Maruf, et al. "The BraTS-Africa dataset: expanding the brain tumor segmentation data to capture African populations." *Radiology: Artificial Intelligence* 7.4 (2025): e240528. |
+| SpineSegMNIST3D | Zhou, Longfei, et al. "The Duke University Cervical Spine MRI Segmentation Dataset (CSpineSeg)." *Scientific Data* 12.1 (2025): 1695. |
+| KneeSegMNIST3D | Ambellan, Felix, et al. "Automated segmentation of knee bone and cartilage combining statistical shape knowledge and convolutional neural networks: Data from the Osteoarthritis Initiative." *Medical Image Analysis* 52 (2019): 109-118. |
+| LungSegMNIST2D | Danilov, Viacheslav, et al. "Chest X-ray dataset for lung segmentation." *Mendeley Data*, V2, doi: 10.17632/8gf9vpkhgy.2 |
+| NucleiSegMNIST2D | (1) Kumar, Neeraj, et al. "A multi-organ nucleus segmentation challenge." *IEEE TMI* 39.5 (2019): 1380–1391. (2) Samet, Refik, et al. "NuSeC." arXiv:2507.14272 (2025). |
+| PolypSegMNIST2D | Jha, Debesh, et al. "Kvasir-SEG: A Segmented Polyp Dataset." *MMM 2020*. |
+| BreastSegMNIST2D | Oza, Parita, et al. "Digital mammography dataset for breast cancer diagnosis research (DMID) with breast mass segmentation analysis." *Biomedical Engineering Letters* 14.2 (2024): 317-330. |
+| FundusSegMNIST2D | Jin, Kai, et al. "FIVES: A Fundus Image Dataset for AI based Vessel Segmentation." *Scientific Data* 11.1 (2024): 1064. |
+| SkinSegMNIST2D | Codella, Noel, et al. "Skin Lesion Analysis Toward Melanoma Detection 2018." arXiv:1902.03368 (2019). |
 
 ---
 
@@ -322,12 +339,4 @@ Please also cite the original source papers of the constituent datasets:
 
 The MedSegMNIST code is distributed under the [Apache 2.0 License](LICENSE).
 
-The constituent datasets retain their original licenses:
-
-| Dataset | License |
-|---------|---------|
-| BrainSegMNIST3D | BraTS — CC BY 4.0 |
-| LungSegMNIST2D | Varies by source subset |
-| NucleiSegMNIST2D | Research purposes (original terms apply) |
-
-These datasets are **not** intended for clinical use.
+The constituent datasets retain their original licenses. They are **not** intended for clinical use.
